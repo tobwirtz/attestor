@@ -109,6 +109,16 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
                 case "<SLList: void appendOneElement(SLList)>":
                     logger.trace("recognized InvokeStmt. " + "<SLList: void appendOneElement(SLList)>");
                     return new AppendOneElementDummyStmt(this, invokePrepare, pc + 1);
+
+                case "<java.util.LinkedList: void <init>()>":
+                    instanceMethod = (soot.jimple.InstanceInvokeExpr) expr;
+                    sootBase = instanceMethod.getBase();
+                    translatedBase = topLevel.translateValue(sootBase);
+
+                    logger.trace("recognized InvokeStmt. " + "<java.util.LinkedList: void <init>()>");
+                    return new LinkedListInitStmt(this, invokePrepare, translatedBase, pc + 1);
+
+                
                 default: return translateInvokeStmt(input, pc);
             }
 
