@@ -134,6 +134,14 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
                     logger.trace("recognized InvokeStmt. " + "<java.util.List: void clear()>");
                     return new ClearStmt(this, invokePrepare, translatedBase, pc + 1);
 
+                case "<java.util.List: java.lang.Object remove(int)>":
+                    instanceMethod = (soot.jimple.InstanceInvokeExpr) expr;
+                    sootBase = instanceMethod.getBase();
+                    translatedBase = topLevel.translateValue(sootBase);
+
+                    logger.trace("recognized InvokeStmt. " + "<java.util.List: java.lang.Object remove(int)>");
+                    return new AddAtIndexStmt(this, invokePrepare, translatedBase, pc + 1);
+
                 default: return translateInvokeStmt(input, pc);
             }
 
@@ -211,8 +219,40 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
             InvokeHelper invokePrepare = createInvokeHelper(invokeExpr);
             invokePrepare.setLiveVariableNames(LiveVariableHelper.extractLiveVariables(input));
             Method method = topLevel.getMethod(invokeExpr.getMethod().getSignature());
+
+            if(method.getSignature().equals("<java.util.List: java.util.Iterator iterator()>")){
+                soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
+                soot.Value sootBase = instanceMethod.getBase();
+                Value rhs = topLevel.translateValue(sootBase);
+                return new AssignStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+            }
+
+            if(method.getSignature().equals("<java.util.Iterator: java.lang.Object next()>")){
+                /*
+                TODO Einkommentieren und fertig stellen
+                soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
+                soot.Value sootBase = instanceMethod.getBase();
+                lhs = (SettableValue) topLevel.translateValue(sootBase);
+                return new IteratorNextAssignStmt(this, lhs, lhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+
+                 */
+
+                /*
+                // funktioniert nicht, weil man die variablen auf heap ebene nicht setzen/entfernen kann
+                soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
+                soot.Value sootBase = instanceMethod.getBase();
+                Value base = topLevel.translateValue(sootBase);
+                return new IteratorNextAlternative(this, invokePrepare, base, pc+1);
+*/
+            }
+
             return new AssignInvoke(this, lhs, method, invokePrepare, pc + 1);
-        } else {
+        /*} else if(stmt.getRightOp().toString().equals("new java.util.LinkedList")){
+            Value rhs = topLevel.translateValue(stmt.getRightOp());
+            return new AssignStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+
+         */
+        } else{
             Value rhs = topLevel.translateValue(stmt.getRightOp());
             return new AssignStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
         }
