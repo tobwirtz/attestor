@@ -4,6 +4,7 @@ import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.*;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.JavaLibrarySupport.*;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InstanceInvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.StaticInvokeHelper;
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * Translator for all standard statements/values which operate on JimpleExecutables.
  *
- * @author Hannah Arndt, Christoph
+ * @author Hannah Arndt, Christoph, Tobias
  */
 public class StandardAbstractSemantics extends SceneObject implements JimpleToAbstractSemantics {
 
@@ -92,7 +93,24 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
             return translateReturnVoidStmt();
         }
         if (input instanceof soot.jimple.InvokeStmt) {
-            return translateInvokeStmt(input, pc);
+
+            soot.jimple.InvokeStmt stmt = (soot.jimple.InvokeStmt) input;
+            soot.jimple.InvokeExpr expr = stmt.getInvokeExpr();
+
+            InvokeHelper invokePrepare = createInvokeHelper(expr);
+            invokePrepare.setLiveVariableNames(LiveVariableHelper.extractLiveVariables(input));
+
+            //for instance invokes
+            soot.jimple.InstanceInvokeExpr instanceMethod;
+            soot.Value sootBase;
+            Value translatedBase;
+
+            switch (input.getInvokeExpr().getMethod().getSignature()){
+                case "<SLList: void appendOneElement(SLList)>":
+                    logger.trace("recognized InvokeStmt. " + "<SLList: void appendOneElement(SLList)>");
+                    return new AppendOneElementDummyStmt(this, invokePrepare, pc + 1);
+                default: return translateInvokeStmt(input, pc);
+            }
 
         }
 
