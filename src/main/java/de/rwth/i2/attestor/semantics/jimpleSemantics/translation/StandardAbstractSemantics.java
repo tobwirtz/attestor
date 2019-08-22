@@ -243,14 +243,13 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
             }
 
             if(method.getSignature().equals("<java.util.Iterator: java.lang.Object next()>")){
-                /*
-                TODO Einkommentieren und fertig stellen
+                
                 soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
                 soot.Value sootBase = instanceMethod.getBase();
                 lhs = (SettableValue) topLevel.translateValue(sootBase);
                 return new IteratorNextAssignStmt(this, lhs, lhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
 
-                 */
+
 
                 /*
                 // funktioniert nicht, weil man die variablen auf heap ebene nicht setzen/entfernen kann
