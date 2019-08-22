@@ -115,6 +115,15 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
                     sootBase = instanceMethod.getBase();
                     translatedBase = topLevel.translateValue(sootBase);
 
+
+                    // define what selectos a linked-list-node is supposed to have (default point to null-node)
+                    Type baseType = topLevel.translateType(sootBase.getType()) ;
+                    SelectorLabel nextLabel = scene().getSelectorLabel("next");
+
+                    baseType.addSelectorLabel(nextLabel, TypeNames.getDefaultValue(sootBase.getType().toString()));
+                    scene().labels().addUsedSelectorLabel("next");
+
+
                     logger.trace("recognized InvokeStmt. " + "<java.util.LinkedList: void <init>()>");
                     return new LinkedListInitStmt(this, invokePrepare, translatedBase, pc + 1);
 
@@ -140,7 +149,13 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
                     translatedBase = topLevel.translateValue(sootBase);
 
                     logger.trace("recognized InvokeStmt. " + "<java.util.List: java.lang.Object remove(int)>");
-                    return new AddAtIndexStmt(this, invokePrepare, translatedBase, pc + 1);
+                    return new RemoveIndexStmt(this, invokePrepare, translatedBase, pc + 1);
+
+                case "<java.util.List: java.util.Iterator iterator()>":
+                    // TODO ?
+
+                case "<java.util.Collections: void reverse(java.util.List)>":
+                    // falls Zeit ist
 
                 default: return translateInvokeStmt(input, pc);
             }

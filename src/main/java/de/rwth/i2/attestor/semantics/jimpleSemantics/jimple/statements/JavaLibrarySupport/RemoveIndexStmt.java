@@ -167,7 +167,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         return result;
     }
 
-    
+
 
     private HeapConfiguration removeNodeWithConcreteSuccessor(HeapConfiguration heapConfig, int node, int prevnode, SelectorLabel next){
         HeapConfiguration copy = heapConfig.clone();
