@@ -24,7 +24,6 @@ import java.util.Set;
 /**
  * @author Tobias
  *
- * DOES NOT WORK, BECAUSE potentialViolationPoints ARE ALWAYS EMPTY, THUS THE STATE DOES NOT GET MATERIALZED
  */
 
 public class IteratorNextAssignStmt extends Statement {
@@ -59,6 +58,7 @@ public class IteratorNextAssignStmt extends Statement {
         potentialViolationPoints = new ViolationPoints();
         potentialViolationPoints.addAll(lhs.getPotentialViolationPoints());
         potentialViolationPoints.addAll(rhs.getPotentialViolationPoints());
+        potentialViolationPoints.add(rhs.toString(), "next");
 
 
     }
@@ -116,7 +116,7 @@ public class IteratorNextAssignStmt extends Statement {
 
     public String toString() {
 
-        return lhs.toString() + " = " + rhs.toString() + ";";
+        return lhs.toString() + ".next()" + ";";
     }
 
     @Override

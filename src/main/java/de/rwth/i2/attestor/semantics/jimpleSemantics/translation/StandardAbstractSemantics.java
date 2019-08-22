@@ -243,7 +243,7 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
             }
 
             if(method.getSignature().equals("<java.util.Iterator: java.lang.Object next()>")){
-                
+
                 soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
                 soot.Value sootBase = instanceMethod.getBase();
                 lhs = (SettableValue) topLevel.translateValue(sootBase);
