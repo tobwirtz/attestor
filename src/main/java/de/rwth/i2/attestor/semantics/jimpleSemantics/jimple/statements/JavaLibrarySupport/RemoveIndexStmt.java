@@ -121,7 +121,9 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
                 HeapConfiguration copy = heapConfig.clone();
 
-                copy.attachedNodesOf(ntEdge).replace(1, heapConfig.selectorTargetOf(node, next));
+                // replace second tentacle of ntEdge with the successor of node
+                replaceNtEdgeWithUpdatedTentacles(copy, ntEdge, copy.attachedNodesOf(ntEdge).get(0), heapConfig.selectorTargetOf(node, next));
+                //copy.attachedNodesOf(ntEdge).replace(1, heapConfig.selectorTargetOf(node, next));
                 copy.builder().removeNode(node);
                 result.add(preparedState.shallowCopyWithUpdateHeap(copy));
             }else{
@@ -142,7 +144,10 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
                         .removeSelector(node, next)
                         .addSelector(node, next, newNode.get(0))
                         .build();
-                copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).replace(0, newNode.get(0));
+
+                // replace first tentacle of ntEdge with the new node
+                replaceNtEdgeWithUpdatedTentacles(copyWithSecondRule, ntEdgeToBeMaterialized, newNode.get(0), copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).get(1));
+                //copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).replace(0, newNode.get(0));
 
                 // remove nodes
                 copyWithFirstRule = removeNodeWithConcreteSuccessor(copyWithFirstRule, node, prevNode, next);
@@ -168,7 +173,15 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
     }
 
 
-
+    /**
+     * Removes node from the list and connects the prevoius node with the successor node
+     * node needs to have a materialized successor node
+     * @param heapConfig
+     * @param node node to be removed
+     * @param prevnode node pointing with next selector to the node to be removed
+     * @param next selectorlabel next
+     * @return the heapconfiguration with the node removed from it
+     */
     private HeapConfiguration removeNodeWithConcreteSuccessor(HeapConfiguration heapConfig, int node, int prevnode, SelectorLabel next){
         HeapConfiguration copy = heapConfig.clone();
         if(heapConfig.selectorLabelsOf(node).contains(next) && heapConfig.selectorLabelsOf(prevnode).contains(next) && heapConfig.selectorTargetOf(prevnode, next) == node){
@@ -183,8 +196,9 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             // case when the next node is materialized and previous node was ntEdge
             int ntEdge = heapConfig.attachedNonterminalEdgesOf(node).get(0);
 
-            // TODO next line does not work, replace it with the correct code
-            copy.attachedNodesOf(ntEdge).replace(1, heapConfig.selectorTargetOf(node, next));
+            // replace second tentacle of ntEdge with the successor of node
+            replaceNtEdgeWithUpdatedTentacles(copy, ntEdge, copy.attachedNodesOf(ntEdge).get(0), heapConfig.selectorTargetOf(node, next));
+            //copy.attachedNodesOf(ntEdge).replace(1, heapConfig.selectorTargetOf(node, next));
             copy.builder().removeNode(node);
             return copy;
         }
@@ -215,6 +229,21 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         }
         return currentNode;
     }
+
+
+    private void replaceNtEdgeWithUpdatedTentacles(HeapConfiguration hc, int ntEdge, int t1, int t2){
+
+        TIntArrayList newAttachedNodes = new TIntArrayList();
+        newAttachedNodes.add(t1);
+        newAttachedNodes.add(t2);
+
+        hc.builder().addNonterminalEdge(hc.labelOf(ntEdge), newAttachedNodes)
+                .removeNonterminalEdge(ntEdge)
+                .build();
+        return;
+    }
+
+
 
     @Override
     public ViolationPoints getPotentialViolationPoints() {
