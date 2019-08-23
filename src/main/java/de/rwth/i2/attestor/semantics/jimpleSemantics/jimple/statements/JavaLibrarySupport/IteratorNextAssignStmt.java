@@ -90,7 +90,9 @@ public class IteratorNextAssignStmt extends Statement {
 
         SelectorLabel next = scene().getSelectorLabel("next");
 
-        concreteRHS = programState.getSelectorTarget(concreteRHS, next);
+        if(concreteRHS.equals(programState.getVariableTarget("null"))){
+            concreteRHS = programState.getSelectorTarget(concreteRHS, next);
+        }
 
         try {
             lhs.evaluateOn(programState); // enforce materialization if necessary
