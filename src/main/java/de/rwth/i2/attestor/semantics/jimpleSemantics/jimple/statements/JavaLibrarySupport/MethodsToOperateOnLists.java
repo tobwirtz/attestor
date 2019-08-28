@@ -61,9 +61,26 @@ class MethodsToOperateOnLists {
                     .addSelector(newNodes.get(0), next, followingNode)
                     .build();
 
-        }else{
-            // TODO as soon as you know how you can modify ntEdges
+        }else if(node != hc.variableTargetOf("null")) {
+            
+            int followingNtEdge = hc.attachedNonterminalEdgesOf(node).get(hc.attachedNonterminalEdgesOf(node).size()-1);
+            TIntArrayList tentacles = hc.attachedNodesOf(followingNtEdge);
+
+            int nodeAfterNtEdge;
+
+            if(tentacles.get(0) == node){
+                nodeAfterNtEdge = tentacles.get(1);
+            }else{
+                nodeAfterNtEdge = tentacles.get(0);
+            }
+
+            hc.builder().addNodes(nodeType, 1, newNodes)
+                    .addSelector(node, next, newNodes.get(0))
+                    .build();
+
+            replaceNtEdgeWithUpdatedTentacles(hc, followingNtEdge, newNodes.get(0), nodeAfterNtEdge);
         }
+
 
     }
 
