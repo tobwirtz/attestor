@@ -239,15 +239,18 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
                 soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
                 soot.Value sootBase = instanceMethod.getBase();
                 Value rhs = topLevel.translateValue(sootBase);
-                return new AssignStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+                //return new AssignStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+                return new IteratorAsObjectStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
             }
 
             if(method.getSignature().equals("<java.util.Iterator: java.lang.Object next()>")){
 
                 soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
                 soot.Value sootBase = instanceMethod.getBase();
-                lhs = (SettableValue) topLevel.translateValue(sootBase);
-                return new IteratorNextAssignStmt(this, lhs, lhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+                //lhs = (SettableValue) topLevel.translateValue(sootBase);
+                //return new IteratorNextAssignStmt(this, lhs, lhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+                Value rhs = topLevel.translateValue(sootBase);
+                return new IteratorNextAsObjectStmt(this, lhs, rhs, pc  + 1, LiveVariableHelper.extractLiveVariables(input));
 
 
 
