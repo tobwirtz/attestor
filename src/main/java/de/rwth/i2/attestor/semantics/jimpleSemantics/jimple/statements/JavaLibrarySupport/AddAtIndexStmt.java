@@ -1,11 +1,8 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.JavaLibrarySupport;
 
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
-import de.rwth.i2.attestor.graph.Nonterminal;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
-import de.rwth.i2.attestor.graph.heap.NonterminalEdgeBuilder;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
@@ -19,7 +16,6 @@ import gnu.trove.list.array.TIntArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -97,11 +93,11 @@ public class AddAtIndexStmt extends Statement implements InvokeCleanup {
 
             // add node and add resulting state to result
             HeapConfiguration newHC = heapConfig.clone();
-            newHC = insertElementIntoListAtNextPosition(newHC, node, next);
+            MethodsToOperateOnLists.insertElementIntoListAtNextPosition(newHC, node, next, scene().getType("java.util.LinkedList"));
             result.add(preparedState.shallowCopyWithUpdateHeap(newHC));
 
             // continue iterating through original list
-            node = getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
         }
 
 
@@ -112,54 +108,6 @@ public class AddAtIndexStmt extends Statement implements InvokeCleanup {
         return result;
     }
 
-
-
-    private int getNextConcreteNodeInList(HeapConfiguration hc, TIntArrayList visitedNodes, int currentNode, SelectorLabel next){
-        visitedNodes.add(currentNode);
-        if(hc.selectorLabelsOf(currentNode).contains(next)){
-            currentNode = hc.selectorTargetOf(currentNode, next);
-        }else{
-            TIntArrayList ntEdges = hc.attachedNonterminalEdgesOf(currentNode);
-            if(ntEdges.size() > 2){
-                System.out.println("Input does not seem to be a List:" + hc);
-            }
-            for(int i : ntEdges.toArray()){
-                TIntArrayList tentacles = hc.attachedNodesOf(i);
-                for(int j : tentacles.toArray()){
-                    if(!visitedNodes.contains(j)){
-                        currentNode = j;
-                        break;
-                    }
-                }
-                if(!visitedNodes.contains(currentNode)){
-                    break;
-                }
-            }
-        }
-        return currentNode;
-    }
-
-
-
-    private HeapConfiguration insertElementIntoListAtNextPosition(HeapConfiguration hc, int node, SelectorLabel next){
-
-        TIntArrayList newNodes = new TIntArrayList();
-
-        if(hc.selectorLabelsOf(node).contains(next)){
-
-            int followingNode = hc.selectorTargetOf(node,next);
-
-            hc.builder().addNodes(scene().getType("java.util.LinkedList"), 1, newNodes)
-                    .removeSelector(node, next)
-                    .addSelector(node, next, newNodes.get(0))
-                    .addSelector(newNodes.get(0), next, followingNode)
-                    .build();
-
-        }else{
-            // TODO as soon as you know how you can modify ntEdges
-        }
-        return hc;
-    }
 
     @Override
     public ViolationPoints getPotentialViolationPoints() {

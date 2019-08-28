@@ -1,11 +1,8 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.JavaLibrarySupport;
 
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
-import de.rwth.i2.attestor.graph.Nonterminal;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
-import de.rwth.i2.attestor.graph.heap.NonterminalEdgeBuilder;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
@@ -19,7 +16,6 @@ import gnu.trove.list.array.TIntArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -101,7 +97,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
         int prevNode = node;
         TIntArrayList visitedNodes = new TIntArrayList();
-        node = getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+        node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
 
         while(node != heapConfig.variableTargetOf("null") && heapConfig.selectorTargetOf(node, next) != heapConfig.variableTargetOf("null")){
 
@@ -133,7 +129,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
                         .build();
 
                 // replace first tentacle of ntEdge with the new node
-                replaceNtEdgeWithUpdatedTentacles(copyWithSecondRule, ntEdgeToBeMaterialized, newNode.get(0), copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).get(1));
+                MethodsToOperateOnLists.replaceNtEdgeWithUpdatedTentacles(copyWithSecondRule, ntEdgeToBeMaterialized, newNode.get(0), copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).get(1));
                 //copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).replace(0, newNode.get(0));
 
                 // remove nodes
@@ -145,7 +141,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             }
             // get to next concrete node in the list
 
-            node = getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
         }
 
         // TODO handle removing the last node before null-node
@@ -184,51 +180,13 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             int ntEdge = heapConfig.attachedNonterminalEdgesOf(node).get(0);
 
             // replace second tentacle of ntEdge with the successor of node
-            replaceNtEdgeWithUpdatedTentacles(copy, ntEdge, copy.attachedNodesOf(ntEdge).get(0), heapConfig.selectorTargetOf(node, next));
+            MethodsToOperateOnLists.replaceNtEdgeWithUpdatedTentacles(copy, ntEdge, copy.attachedNodesOf(ntEdge).get(0), heapConfig.selectorTargetOf(node, next));
             //copy.attachedNodesOf(ntEdge).replace(1, heapConfig.selectorTargetOf(node, next));
             copy.builder().removeNode(node);
             return copy;
         }
         return null;
     }
-
-    private int getNextConcreteNodeInList(HeapConfiguration hc, TIntArrayList visitedNodes, int currentNode, SelectorLabel next){
-        visitedNodes.add(currentNode);
-        if(hc.selectorLabelsOf(currentNode).contains(next)){
-            currentNode = hc.selectorTargetOf(currentNode, next);
-        }else{
-            TIntArrayList ntEdges = hc.attachedNonterminalEdgesOf(currentNode);
-            if(ntEdges.size() > 2){
-                System.out.println("Input does not seem to be a List:" + hc);
-            }
-            for(int i : ntEdges.toArray()){
-                TIntArrayList tentacles = hc.attachedNodesOf(i);
-                for(int j : tentacles.toArray()){
-                    if(!visitedNodes.contains(j)){
-                        currentNode = j;
-                        break;
-                    }
-                }
-                if(!visitedNodes.contains(currentNode)){
-                    break;
-                }
-            }
-        }
-        return currentNode;
-    }
-
-
-    private void replaceNtEdgeWithUpdatedTentacles(HeapConfiguration hc, int ntEdge, int t1, int t2){
-
-        TIntArrayList newAttachedNodes = new TIntArrayList();
-        newAttachedNodes.add(t1);
-        newAttachedNodes.add(t2);
-
-        hc.builder().addNonterminalEdge(hc.labelOf(ntEdge), newAttachedNodes)
-                .removeNonterminalEdge(ntEdge)
-                .build();
-    }
-
 
 
     @Override
