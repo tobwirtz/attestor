@@ -9,6 +9,7 @@ import de.rwth.i2.attestor.types.Type;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Tobias
@@ -21,7 +22,7 @@ public class ValidationComponent extends SceneObject {
         super(otherObject);
     }
 
-    public HeapConfiguration dllToHC(List list){
+    public HeapConfiguration dllToHC(List list, Map variablesAndElements, List elementsHavingVariables){
         HeapConfiguration result = new InternalHeapConfiguration();
         TIntArrayList nodes = new TIntArrayList();
 
@@ -30,20 +31,27 @@ public class ValidationComponent extends SceneObject {
         Type type = scene().getType("node");
 
         int index = 0;
+        HeapConfigurationBuilder builder = result.builder();
 
         for(Object element : list){
 
-            result.builder().addNodes(type, 1, nodes);
+            builder = builder.addNodes(type, 1, nodes);
 
             if(index > 0){
-                result.builder().addSelector(index-1, next, index);
+                builder = builder.addSelector(index-1, next, index);
                 //result.builder().addSelector(index, prev, index-1);
+            }
+
+            if(elementsHavingVariables.contains(element)){
+                // add variable to nodes.get(index)
+                builder = builder.addVariableEdge((String) variablesAndElements.get(element), index);
+
             }
 
             index++;
         }
 
-        result.builder().build();
+        result = builder.build();
 
 
 
