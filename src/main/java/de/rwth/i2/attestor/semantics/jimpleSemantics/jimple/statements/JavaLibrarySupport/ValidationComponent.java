@@ -8,6 +8,7 @@ import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.types.Type;
 import gnu.trove.list.array.TIntArrayList;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -58,5 +59,59 @@ public class ValidationComponent extends SceneObject {
         return result;
     }
 
-    
+    public List buildLists(){
+        List<List> result = new LinkedList<>();
+
+
+
+        return result;
+    }
+
+
+
+
+    public boolean listIsomorphycheck (HeapConfiguration heap1, int head1, HeapConfiguration heap2, int head2){
+
+        SelectorLabel next = scene().getSelectorLabel("next");
+        TIntArrayList matchedInFirst = new TIntArrayList();
+        TIntArrayList matchedInSecond = new TIntArrayList();
+
+        while(head1 != heap1.variableTargetOf("null") && head2 != heap2.variableTargetOf("null")){
+
+            if(heap1.attachedVariablesOf(head1).size() != heap2.attachedVariablesOf(head2).size()
+            || heap1.attachedNonterminalEdgesOf(head1).size() != heap2.attachedNonterminalEdgesOf(head2).size()
+            || heap1.successorNodesOf(head1).size() != heap2.successorNodesOf(head2).size()
+            || heap1.predecessorNodesOf(head1).size() != heap2.predecessorNodesOf(head2).size()){
+                return false;
+            }
+
+            matchedInFirst.add(head1);
+            matchedInSecond.add(head2);
+
+            if(heap1.selectorLabelsOf(head1).contains(next) && heap2.selectorLabelsOf(head2).contains(next)){
+                head1 = heap1.selectorTargetOf(head1, next);
+                head2 = heap2.selectorTargetOf(head2, next);
+            }else if(heap1.attachedNonterminalEdgesOf(head1).size() > 0 && heap2.attachedNonterminalEdgesOf(head2).size() > 0){
+
+                TIntArrayList ntEdges1 = heap1.attachedNonterminalEdgesOf(head1);
+                TIntArrayList ntEdges2 = heap2.attachedNonterminalEdgesOf(head2);
+
+                for(int i = 0; i < ntEdges1.size(); i++){
+
+                    int edge1 = ntEdges1.get(i);
+                    int edge2 = ntEdges2.get(i);
+
+                    if(!matchedInFirst.contains(edge1) && !matchedInSecond.contains(edge2)){
+                        head1 = edge1;
+                        head2 = edge2;
+                        break;
+                    }
+                }
+            }
+
+
+        }
+        return true;
+    }
+
 }
