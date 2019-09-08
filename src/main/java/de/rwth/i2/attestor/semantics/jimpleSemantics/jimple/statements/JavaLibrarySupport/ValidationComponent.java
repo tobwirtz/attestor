@@ -21,7 +21,8 @@ public class ValidationComponent extends SceneObject {
         super(otherObject);
     }
 
-    public HeapConfiguration dllToHC(List list, Map variablesAndElements, List elementsHavingVariables){
+    public HeapConfiguration dllToHC(List list, Map<Object, String> variablesAndElements){
+        Set<Object> elementsHavingVariables = variablesAndElements.keySet();
         HeapConfiguration result = new InternalHeapConfiguration();
         TIntArrayList nodes = new TIntArrayList();
 
@@ -43,7 +44,7 @@ public class ValidationComponent extends SceneObject {
 
             if(elementsHavingVariables.contains(element)){
                 // add variable to nodes.get(index)
-                builder = builder.addVariableEdge((String) variablesAndElements.get(element), index);
+                builder = builder.addVariableEdge(variablesAndElements.get(element), index);
 
             }
 
