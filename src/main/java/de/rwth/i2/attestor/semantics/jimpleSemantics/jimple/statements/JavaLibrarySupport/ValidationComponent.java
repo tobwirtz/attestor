@@ -62,10 +62,21 @@ public class ValidationComponent extends SceneObject {
     public List buildLists(){
         List<List> result = new LinkedList<>();
 
+        // empty List
+        List<Object> li = new LinkedList<>();
+        result.add(li);
 
+        // Lists without variables
+        for(int i = 1; i <= 50; i++){
+            li = new LinkedList<>(li);
+            li.add("Dummy Object");
+            result.add(li);
+        }
 
         return result;
     }
+
+
 
 
 
