@@ -76,13 +76,13 @@ public class ValidationComponent extends SceneObject {
     }
 
     public Map<Object, String> addVariablesRandomlyToList(List<Object> list){
-        // Map<Elements, Variable> --> String, object
+
         Map<Object, String> elementsAndVariablenames = new HashMap<>();
         int variableCount = 1;
         Random rand = new Random();
         for(int i = 0; i < list.size(); i++){
             Object listElement = list.get(i);
-            int getsVariable = rand.nextInt(list.size()*2);
+            int getsVariable = rand.nextInt(4);
 
             if(getsVariable == 1){
                 // save in Map
