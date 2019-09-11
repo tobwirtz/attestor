@@ -5,6 +5,14 @@ import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.graph.heap.internal.InternalHeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InstanceInvokeHelper;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Local;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
+import de.rwth.i2.attestor.semantics.util.Constants;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
+import de.rwth.i2.attestor.stateSpaceGeneration.State;
 import de.rwth.i2.attestor.types.Type;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -28,38 +36,55 @@ public class ValidationComponent extends SceneObject {
 
         SelectorLabel next = scene().getSelectorLabel("next");
         //SelectorLabel prev = scene().getSelectorLabel("prev");
-        Type type = scene().getType("node");
+        Type type = scene().getType("java.util.LinkedList");
 
         int index = 0;
         HeapConfigurationBuilder builder = result.builder();
 
+        builder = builder.addNodes(scene().getType("int"), 2, nodes)
+                .addVariableEdge(Constants.ONE, nodes.get(1))
+                .addVariableEdge(Constants.TRUE, nodes.get(1))
+                .addVariableEdge(Constants.FALSE, nodes.get(0))
+                .addVariableEdge(Constants.ZERO, nodes.get(0));
+        index = index+2;
+
+        // add head node (not an element node)
+        builder = builder.addNodes(type, 1, nodes);
+        builder = builder.addVariableEdge("head", nodes.get(index));
+        index++;
+
+        // add elements
         for(Object element : list){
 
             builder = builder.addNodes(type, 1, nodes);
 
-            if(index > 0){
-                builder = builder.addSelector(index-1, next, index);
-                //result.builder().addSelector(index, prev, index-1);
-            }
+            builder = builder.addSelector(nodes.get(index-1), next, nodes.get(index));
+            //result.builder().addSelector(index, prev, index-1);
+
 
             if(elementsHavingVariables.contains(element)){
                 // add variable to nodes.get(index)
-                builder = builder.addVariableEdge(variablesAndElements.get(element), index);
+                builder = builder.addVariableEdge(variablesAndElements.get(element), nodes.get(index));
 
             }
 
             index++;
         }
 
+        // add null node and let last node point with next to null node
+        builder = builder.addNodes(type, 1, nodes);
+        builder = builder.addVariableEdge(Constants.NULL, nodes.get(index));
+        builder = builder.addSelector(nodes.get(index-1), next, nodes.get(index));
+
         result = builder.build();
 
-
+        // TODO: abstraction needed
 
         return result;
     }
 
-    public List buildLists(){
-        List<List> result = new LinkedList<>();
+    private List<List<Object>> buildLists(){
+        List<List<Object>> result = new LinkedList<>();
 
         // empty List
         List<Object> li = new LinkedList<>();
@@ -68,14 +93,15 @@ public class ValidationComponent extends SceneObject {
         // Lists without variables
         for(int i = 1; i <= 50; i++){
             li = new LinkedList<>(li);
-            li.add("Dummy Object");
+            // needs to be numbered for the dllToHC method
+            li.add("Dummy Object" + i);
             result.add(li);
         }
 
         return result;
     }
 
-    public Map<Object, String> addVariablesRandomlyToList(List<Object> list){
+    private Map<Object, String> addVariablesRandomlyToList(List<Object> list){
 
         Map<Object, String> elementsAndVariablenames = new HashMap<>();
         int variableCount = 1;
