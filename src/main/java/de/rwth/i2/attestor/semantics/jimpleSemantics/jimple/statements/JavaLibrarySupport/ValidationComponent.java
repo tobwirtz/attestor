@@ -29,7 +29,49 @@ public class ValidationComponent extends SceneObject {
         super(otherObject);
     }
 
-    public HeapConfiguration dllToHC(List list, Map<Object, String> variablesAndElements){
+    boolean validate(){
+
+        boolean result = false;
+
+        // build the lists
+        List<List<Object>> lists = buildLists();
+
+        for(List<Object> l : lists){
+
+            result = false;
+
+            // add variables
+            Map<Object, String> elementsAndVariableNames = addVariablesRandomlyToList(l);
+            // dllToHC
+            ProgramState inputState = scene().createProgramState(dllToHC(l, elementsAndVariableNames));
+            // create statement
+            ArrayList<Value> arguments = new ArrayList<>();
+            InvokeHelper helper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
+            Statement stmt = new AddStmt(this, helper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+            // execute method on original list
+            List<Object> lForAddStmt = new LinkedList<>(l);
+            lForAddStmt.add("Test");
+            // dllToHC
+            // check if there is a match
+            Collection<ProgramState> successors = stmt.computeSuccessors(inputState);
+            // TODO abstraction step needed
+            HeapConfiguration libraryResultHeap = dllToHC(lForAddStmt, elementsAndVariableNames);
+
+            for(ProgramState succ : successors){
+                if(libraryResultHeap.equals(succ.getHeap())){
+                    result = true;
+                }
+            }
+            if(!result){
+                return false;
+            }
+        }
+
+
+        return result;
+    }
+
+    private HeapConfiguration dllToHC(List list, Map<Object, String> variablesAndElements){
         Set<Object> elementsHavingVariables = variablesAndElements.keySet();
         HeapConfiguration result = new InternalHeapConfiguration();
         TIntArrayList nodes = new TIntArrayList();
