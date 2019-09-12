@@ -29,19 +29,19 @@ public class ValidationComponent extends SceneObject {
         super(otherObject);
     }
 
-    boolean validate(){
+    boolean validate(int maxListLength, int inversePercentageForVariable){
 
         boolean result = false;
 
         // build the lists
-        List<List<Object>> lists = buildLists();
+        List<List<Object>> lists = buildLists(maxListLength);
 
         for(List<Object> l : lists){
 
             result = false;
 
             // add variables
-            Map<Object, String> elementsAndVariableNames = addVariablesRandomlyToList(l);
+            Map<Object, String> elementsAndVariableNames = addVariablesRandomlyToList(l, inversePercentageForVariable);
             // dllToHC
             ProgramState inputState = scene().createProgramState(dllToHC(l, elementsAndVariableNames));
             // create statement
@@ -51,8 +51,8 @@ public class ValidationComponent extends SceneObject {
             // execute method on original list
             List<Object> lForAddStmt = new LinkedList<>(l);
             lForAddStmt.add("Test");
-            // dllToHC
-            // check if there is a match
+
+            // compute successors and check if there is a match with the library list
             Collection<ProgramState> successors = stmt.computeSuccessors(inputState);
             // TODO abstraction step needed
             HeapConfiguration libraryResultHeap = dllToHC(lForAddStmt, elementsAndVariableNames);
@@ -125,7 +125,7 @@ public class ValidationComponent extends SceneObject {
         return result;
     }
 
-    private List<List<Object>> buildLists(){
+    private List<List<Object>> buildLists(int maxListLength){
         List<List<Object>> result = new LinkedList<>();
 
         // empty List
@@ -133,7 +133,7 @@ public class ValidationComponent extends SceneObject {
         result.add(li);
 
         // Lists without variables
-        for(int i = 1; i <= 50; i++){
+        for(int i = 1; i <= maxListLength; i++){
             li = new LinkedList<>(li);
             // needs to be numbered for the dllToHC method
             li.add("Dummy Object" + i);
@@ -143,14 +143,14 @@ public class ValidationComponent extends SceneObject {
         return result;
     }
 
-    private Map<Object, String> addVariablesRandomlyToList(List<Object> list){
+    private Map<Object, String> addVariablesRandomlyToList(List<Object> list, int inversePercentageForVariable){
 
         Map<Object, String> elementsAndVariablenames = new HashMap<>();
         int variableCount = 1;
         Random rand = new Random();
         for(int i = 0; i < list.size(); i++){
             Object listElement = list.get(i);
-            int getsVariable = rand.nextInt(4);
+            int getsVariable = rand.nextInt(inversePercentageForVariable);
 
             if(getsVariable == 1){
                 // save in Map
