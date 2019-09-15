@@ -39,5 +39,7 @@ public class ValidationComponentTest {
         //HeapConfiguration hc = translator.dllToHC(inputList);
         //System.out.println(hc.toString());
         assertTrue("AddStmt is successfully validated", validationComponent.validate(50, 4, "AddStmt"));
+        assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(50, 4, "AddAtIndexStmt"));
+
     }
 }

@@ -105,6 +105,7 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
             soot.Value sootBase;
             Value translatedBase;
 
+            // TODO Maybe move switch case into translateInvokeStmt method to reduce code redundancies
             switch (input.getInvokeExpr().getMethod().getSignature()){
                 case "<SLList: void appendOneElement(SLList)>":
                     logger.trace("recognized InvokeStmt. " + "<SLList: void appendOneElement(SLList)>");

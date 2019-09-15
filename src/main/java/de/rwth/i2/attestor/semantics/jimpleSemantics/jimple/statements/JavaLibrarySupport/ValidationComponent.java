@@ -48,14 +48,15 @@ public class ValidationComponent extends SceneObject {
 
             Collection<ProgramState> successors = new LinkedHashSet<>();
             List<Object> libraryList = new LinkedList<>(l);
+            ArrayList<Value> arguments = new ArrayList<>();
+            InvokeHelper instanceHelper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
+            Statement stmt;
 
             switch(stmtToBeValidated){
 
                 case "AddStmt":
                     // create statement
-                    ArrayList<Value> arguments = new ArrayList<>();
-                    InvokeHelper helper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
-                    Statement stmt = new AddStmt(this, helper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+                    stmt = new AddStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
 
                     // compute successors / execute transfer function
                     successors = stmt.computeSuccessors(inputState);
@@ -65,6 +66,20 @@ public class ValidationComponent extends SceneObject {
                     break;
 
                 case "AddAtIndexStmt":
+                    // create statement
+                    stmt = new AddAtIndexStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1); //new AddStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+
+                    // compute successors / execute transfer function
+                    successors = stmt.computeSuccessors(inputState);
+
+                    // execute method on original list
+                    if(libraryList.size() == 0){
+                        libraryList.add(0, "Test");
+                    }else{
+                        Random index = new Random();
+                        libraryList.add(index.nextInt(libraryList.size()), "Test");
+                    }
+
                     break;
 
                 case "ClearStmt":
