@@ -199,11 +199,10 @@ public class ValidationComponent extends SceneObject {
         Map<Object, String> elementsAndVariablenames = new HashMap<>();
         int variableCount = 1;
         Random rand = new Random();
-        for(int i = 0; i < list.size(); i++){
-            Object listElement = list.get(i);
+        for (Object listElement : list) {
             int getsVariable = rand.nextInt(inversePercentageForVariable);
 
-            if(getsVariable == 1){
+            if (getsVariable == 1) {
                 // save in Map
                 elementsAndVariablenames.put(listElement, "Var " + variableCount);
                 variableCount++;
