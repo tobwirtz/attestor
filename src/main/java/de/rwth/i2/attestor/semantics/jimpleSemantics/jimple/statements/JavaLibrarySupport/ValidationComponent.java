@@ -29,7 +29,7 @@ public class ValidationComponent extends SceneObject {
         super(otherObject);
     }
 
-    boolean validate(int maxListLength, int inversePercentageForVariable){
+    boolean validate(int maxListLength, int inversePercentageForVariable, String stmtToBeValidated){
 
         boolean result = false;
 
@@ -44,19 +44,47 @@ public class ValidationComponent extends SceneObject {
             Map<Object, String> elementsAndVariableNames = addVariablesRandomlyToList(l, inversePercentageForVariable);
             // dllToHC
             ProgramState inputState = scene().createProgramState(dllToHC(l, elementsAndVariableNames));
-            // create statement
-            ArrayList<Value> arguments = new ArrayList<>();
-            InvokeHelper helper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
-            Statement stmt = new AddStmt(this, helper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
-            // execute method on original list
-            List<Object> lForAddStmt = new LinkedList<>(l);
-            lForAddStmt.add("Test");
 
-            // compute successors and check if there is a match with the library list
-            Collection<ProgramState> successors = stmt.computeSuccessors(inputState);
-            // TODO abstraction step needed
-            HeapConfiguration libraryResultHeap = dllToHC(lForAddStmt, elementsAndVariableNames);
 
+            Collection<ProgramState> successors = new LinkedHashSet<>();
+            List<Object> libraryList = new LinkedList<>(l);
+
+            switch(stmtToBeValidated){
+
+                case "AddStmt":
+                    // create statement
+                    ArrayList<Value> arguments = new ArrayList<>();
+                    InvokeHelper helper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
+                    Statement stmt = new AddStmt(this, helper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+
+                    // compute successors / execute transfer function
+                    successors = stmt.computeSuccessors(inputState);
+
+                    // execute method on original list
+                    libraryList.add("Test");
+                    break;
+
+                case "AddAtIndexStmt":
+                    break;
+
+                case "ClearStmt":
+                    break;
+
+                case "GetIndexStmt":
+                    break;
+
+                case "RemoveIndexStmt":
+                    break;
+
+                default: return false;
+            }
+
+
+            // TODO abstraction step for successors needed
+
+
+            // check if there is a successor that matches the library list
+            HeapConfiguration libraryResultHeap = dllToHC(libraryList, elementsAndVariableNames);
             for(ProgramState succ : successors){
                 if(libraryResultHeap.equals(succ.getHeap())){
                     result = true;

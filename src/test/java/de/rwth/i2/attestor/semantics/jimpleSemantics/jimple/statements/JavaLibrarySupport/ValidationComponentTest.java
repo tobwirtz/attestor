@@ -38,6 +38,6 @@ public class ValidationComponentTest {
         //System.out.println(inputList.toString());
         //HeapConfiguration hc = translator.dllToHC(inputList);
         //System.out.println(hc.toString());
-        assertTrue("AddStmt is successfully validated", validationComponent.validate(50, 4));
+        assertTrue("AddStmt is successfully validated", validationComponent.validate(50, 4, "AddStmt"));
     }
 }
