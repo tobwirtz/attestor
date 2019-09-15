@@ -83,6 +83,14 @@ public class ValidationComponent extends SceneObject {
                     break;
 
                 case "ClearStmt":
+                    // create statement
+                    stmt = new ClearStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+
+                    // compute successors / execute transfer function
+                    successors = stmt.computeSuccessors(inputState);
+
+                    // execute method on original list
+                    libraryList.clear();
                     break;
 
                 case "GetIndexStmt":

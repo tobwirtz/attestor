@@ -40,6 +40,7 @@ public class ValidationComponentTest {
         //System.out.println(hc.toString());
         assertTrue("AddStmt is successfully validated", validationComponent.validate(50, 4, "AddStmt"));
         assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(50, 4, "AddAtIndexStmt"));
+        assertTrue("ClearStmt is successfully validated", validationComponent.validate(50, 4, "ClearStmt"));
 
     }
 }
