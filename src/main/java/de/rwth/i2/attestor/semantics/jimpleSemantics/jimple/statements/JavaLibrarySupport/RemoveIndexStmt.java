@@ -61,15 +61,13 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         ProgramState preparedState = programState.shallowCopyUpdatePC(nextPC);
         invokePrepare.prepareHeap(preparedState);
 
-        // in Case the index is out of bounds
+        // in Case the index is out of bounds (meaning it also handles the case for the empty list)
         result.add(preparedState);
 
         HeapConfiguration heapConfig = preparedState.getHeap();
 
-
-        // TODO For schleife: für jeden materialisierten Element-Knoten 1 Program state, in dem dieser entfernt wird. Falls Knoten eine ntEdge hat, dann diese vorher manuell konkretisieren
-
-        // collect nodes, that have a nonterminal edge in the "next" direction
+        
+        // collect nodes, that have a nonterminal edge in the "next" or "prev" direction
         TIntArrayList hasNonterminalEdgeNextDirection = new TIntArrayList();
         TIntArrayList hasNonterminalEdgePrevDirection = new TIntArrayList();
         int[] nTEdges = heapConfig.nonterminalEdges().toArray();
@@ -80,7 +78,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         }
 
 
-        // go through List and create new ProgramState for every Node that can be removed
+        // set node to base value
         int node;
         try{
             node = ((GeneralConcreteValue) baseValue.evaluateOn(programState)).getNode();
@@ -89,17 +87,19 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             node = -1;
         }
 
-        //TIntArrayList newNodes = new TIntArrayList();
         SelectorLabel next = scene().getSelectorLabel("next");
 
 
         System.out.println("Before (RemoveStmt):" + heapConfig);
 
+
+        // go through List and create new ProgramState for every Node that can be removed
+
         int prevNode = node;
         TIntArrayList visitedNodes = new TIntArrayList();
         node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
 
-        while(node != heapConfig.variableTargetOf("null") && heapConfig.selectorTargetOf(node, next) != heapConfig.variableTargetOf("null")){
+        while(node != heapConfig.variableTargetOf("null")){
 
 
             if(heapConfig.selectorLabelsOf(node).contains(next)){
@@ -139,13 +139,12 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
                 result.add(preparedState.shallowCopyWithUpdateHeap(copyWithFirstRule));
                 result.add(preparedState.shallowCopyWithUpdateHeap(copyWithSecondRule));
             }
+
             // get to next concrete node in the list
-
+            prevNode = node;
             node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+
         }
-
-        // TODO handle removing the last node before null-node
-
 
 
         for(ProgramState p : result){

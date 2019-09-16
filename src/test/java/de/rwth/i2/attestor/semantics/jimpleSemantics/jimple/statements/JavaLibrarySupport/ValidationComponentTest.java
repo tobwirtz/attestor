@@ -34,13 +34,15 @@ public class ValidationComponentTest {
     }
 
     @Test
-    public void dllToHC() {
+    public void validateTest() {
         //System.out.println(inputList.toString());
         //HeapConfiguration hc = translator.dllToHC(inputList);
         //System.out.println(hc.toString());
-        assertTrue("AddStmt is successfully validated", validationComponent.validate(50, 4, "AddStmt"));
-        assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(50, 4, "AddAtIndexStmt"));
-        assertTrue("ClearStmt is successfully validated", validationComponent.validate(50, 4, "ClearStmt"));
-
+        int maxListLength = 50;
+        int inversePercentageForVariable = 4;
+        assertTrue("AddStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddStmt"));
+        assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddAtIndexStmt"));
+        assertTrue("ClearStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "ClearStmt"));
+        assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));
     }
 }

@@ -97,6 +97,17 @@ public class ValidationComponent extends SceneObject {
                     break;
 
                 case "RemoveIndexStmt":
+                    // create statement
+                    stmt = new RemoveIndexStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+
+                    // compute successors / execute transfer function
+                    successors = stmt.computeSuccessors(inputState);
+
+                    // execute method on original list
+                    if(libraryList.size() > 0){
+                        Random index = new Random();
+                        libraryList.remove(index.nextInt(libraryList.size()));
+                    }
                     break;
 
                 default: return false;
