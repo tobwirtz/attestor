@@ -66,7 +66,7 @@ public class AddAtIndexStmt extends Statement implements InvokeCleanup {
         Set<ProgramState> result = new LinkedHashSet<>();
 
         ProgramState preparedState = programState.shallowCopyUpdatePC(nextPC);
-        invokePrepare.prepareHeap(preparedState);
+        //invokePrepare.prepareHeap(preparedState);
 
         // in Case the index refers to a node, that is not materialized yet
         // in this case the abstraction after the statement will yield the same ProgramState as before
@@ -100,11 +100,11 @@ public class AddAtIndexStmt extends Statement implements InvokeCleanup {
             node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
         }
 
-
+/*
         for(ProgramState p : result){
             invokePrepare.cleanHeap(p);
         }
-
+*/
         return result;
     }
 

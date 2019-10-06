@@ -1,7 +1,17 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.JavaLibrarySupport;
 
 import de.rwth.i2.attestor.MockupSceneObject;
+import de.rwth.i2.attestor.main.PhaseRegistry;
+import de.rwth.i2.attestor.main.scene.DefaultScene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.commandLineInterface.CommandLinePhase;
+import de.rwth.i2.attestor.phases.parser.ParseContractsPhase;
+import de.rwth.i2.attestor.phases.parser.ParseGrammarPhase;
+import de.rwth.i2.attestor.phases.parser.ParseInputPhase;
+import de.rwth.i2.attestor.phases.parser.ParseProgramPhase;
+import de.rwth.i2.attestor.phases.preprocessing.AbstractionPreprocessingPhase;
+import de.rwth.i2.attestor.phases.preprocessing.GrammarRefinementPhase;
+import de.rwth.i2.attestor.phases.preprocessing.MarkingGenerationPhase;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,7 +29,26 @@ public class ValidationComponentTest {
     public void setUp() throws Exception {
 
         sceneObject = new MockupSceneObject();
-        validationComponent = new ValidationComponent(sceneObject);
+
+        String[] args = new String[2];
+        args[0] = "-l";
+        args[1] = "configuration/settings/reverseSLList.attestor";
+        PhaseRegistry registry = new PhaseRegistry();
+        DefaultScene scene = new DefaultScene();
+        registry.addPhase(new CommandLinePhase(scene, args))
+                .addPhase(new ParseProgramPhase(scene)) //
+                .addPhase(new ParseGrammarPhase(scene))
+                .addPhase(new ParseInputPhase(scene))//
+                .addPhase(new ParseContractsPhase(scene))//
+                .addPhase(new MarkingGenerationPhase(scene))//
+                .addPhase(new GrammarRefinementPhase(scene))//
+                .addPhase(new AbstractionPreprocessingPhase(scene))
+                .execute();
+        //ParseGrammarPhase parsePhase = new ParseGrammarPhase(scene);
+        //parsePhase.executePhase();
+        //AbstractionPreprocessingPhase abstractionPhase = new AbstractionPreprocessingPhase(scene);
+        //abstractionPhase.executePhase();
+        validationComponent = new ValidationComponent(scene);
 
         /*
         //build list

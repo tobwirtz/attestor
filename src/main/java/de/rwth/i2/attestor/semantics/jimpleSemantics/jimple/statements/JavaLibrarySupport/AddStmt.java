@@ -57,7 +57,7 @@ public class AddStmt extends Statement implements InvokeCleanup {
     public Collection<ProgramState> computeSuccessors(ProgramState programState) {
 
         ProgramState preparedState = programState.clone();
-        invokePrepare.prepareHeap(preparedState);
+        //invokePrepare.prepareHeap(preparedState);
 
         HeapConfiguration heapConfig = preparedState.getHeap();
 
@@ -131,7 +131,7 @@ public class AddStmt extends Statement implements InvokeCleanup {
 
 
         ProgramState result = preparedState.shallowCopyWithUpdateHeap(heapConfig);
-        invokePrepare.cleanHeap(result);
+        //invokePrepare.cleanHeap(result);
         result.setProgramCounter(nextPC);
 
         return SingleElementUtil.createSet(result);

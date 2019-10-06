@@ -4,11 +4,13 @@ import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.graph.heap.internal.InternalHeapConfiguration;
+import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InstanceInvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Local;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.SettableValue;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
 import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -25,8 +27,8 @@ import java.util.*;
 public class ValidationComponent extends SceneObject {
 
 
-    ValidationComponent(SceneObject otherObject){
-        super(otherObject);
+    ValidationComponent(Scene scene){
+        super(scene);
     }
 
     boolean validate(int maxListLength, int inversePercentageForVariable, String stmtToBeValidated){
@@ -114,13 +116,16 @@ public class ValidationComponent extends SceneObject {
             }
 
 
-            // TODO abstraction step for successors needed
 
 
             // check if there is a successor that matches the library list
             HeapConfiguration libraryResultHeap = dllToHC(libraryList, elementsAndVariableNames);
             for(ProgramState succ : successors){
-                if(libraryResultHeap.equals(succ.getHeap())){
+
+                // abstraction step for successors
+                HeapConfiguration succHC = this.scene().strategies().getCanonicalizationStrategy().canonicalize(succ.getHeap());
+
+                if(libraryResultHeap.equals(succHC)){
                     result = true;
                 }
             }
@@ -182,7 +187,8 @@ public class ValidationComponent extends SceneObject {
 
         result = builder.build();
 
-        // TODO: abstraction needed
+        // abstraction needed
+        result = this.scene().strategies().getCanonicalizationStrategy().canonicalize(result);
 
         return result;
     }

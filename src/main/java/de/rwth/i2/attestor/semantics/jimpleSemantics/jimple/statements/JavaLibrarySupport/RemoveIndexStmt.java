@@ -59,14 +59,14 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         Set<ProgramState> result = new LinkedHashSet<>();
 
         ProgramState preparedState = programState.shallowCopyUpdatePC(nextPC);
-        invokePrepare.prepareHeap(preparedState);
+        //invokePrepare.prepareHeap(preparedState);
 
         // in Case the index is out of bounds (meaning it also handles the case for the empty list)
         result.add(preparedState);
 
         HeapConfiguration heapConfig = preparedState.getHeap();
 
-        
+
         // collect nodes, that have a nonterminal edge in the "next" or "prev" direction
         TIntArrayList hasNonterminalEdgeNextDirection = new TIntArrayList();
         TIntArrayList hasNonterminalEdgePrevDirection = new TIntArrayList();
@@ -146,11 +146,11 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
         }
 
-
+/*
         for(ProgramState p : result){
             invokePrepare.cleanHeap(p);
         }
-
+*/
         return result;
     }
 
@@ -181,7 +181,9 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             // replace second tentacle of ntEdge with the successor of node
             MethodsToOperateOnLists.replaceNtEdgeWithUpdatedTentacles(copy, ntEdge, copy.attachedNodesOf(ntEdge).get(0), heapConfig.selectorTargetOf(node, next));
             //copy.attachedNodesOf(ntEdge).replace(1, heapConfig.selectorTargetOf(node, next));
-            copy.builder().removeNode(node);
+            copy.builder()
+                    .removeNode(node)
+                    .build();
             return copy;
         }
         return null;

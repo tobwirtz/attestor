@@ -55,7 +55,7 @@ public class ClearStmt extends Statement implements InvokeCleanup {
     public Collection<ProgramState> computeSuccessors(ProgramState programState) {
 
         ProgramState preparedState = programState.clone();
-        invokePrepare.prepareHeap(preparedState);
+        //invokePrepare.prepareHeap(preparedState);
 
         final HeapConfiguration heapConfig = preparedState.getHeap();
 
@@ -84,8 +84,10 @@ public class ClearStmt extends Statement implements InvokeCleanup {
         SelectorLabel next = scene().getSelectorLabel("next");
 
         int nodeToBeRemoved = heapConfig.selectorTargetOf(node, next);
-        heapConfig.builder().removeSelector(node, next);
-        heapConfig.builder().addSelector(node, next, heapConfig.variableTargetOf("null"));
+        heapConfig.builder()
+                .removeSelector(node, next)
+                .addSelector(node, next, heapConfig.variableTargetOf("null"))
+                .build();
 
 
         // collect nodes of the old list
@@ -109,7 +111,9 @@ public class ClearStmt extends Statement implements InvokeCleanup {
         nodesToBeRemoved.forEach(new TIntProcedure() {
                                      @Override
                                      public boolean execute(int i) {
-                                         heapConfig.builder().removeNode(i);
+                                         heapConfig.builder()
+                                                 .removeNode(i)
+                                                 .build();
                                          return true;
                                      }
                                  }
@@ -118,7 +122,7 @@ public class ClearStmt extends Statement implements InvokeCleanup {
         System.out.println("After:" + heapConfig);
 
         ProgramState result = preparedState.shallowCopyWithUpdateHeap(heapConfig);
-        invokePrepare.cleanHeap(result);
+        //invokePrepare.cleanHeap(result);
         result.setProgramCounter(nextPC);
 
         return SingleElementUtil.createSet(result);

@@ -43,6 +43,7 @@ public class GetIndexStmt extends Statement {
     private final ViolationPoints potentialViolationPoints;
 
     private final Set<String> liveVariableNames;
+    // TODO remove unused variable liveVariableNames
 
     public GetIndexStmt(SceneObject sceneObject, SettableValue lhs, Value listBase, int nextPC, Set<String> liveVariableNames) {
 
