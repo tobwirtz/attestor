@@ -2,6 +2,8 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.JavaLibr
 
 
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
+import de.rwth.i2.attestor.graph.BasicNonterminal;
+import de.rwth.i2.attestor.graph.Nonterminal;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
@@ -124,10 +126,13 @@ public class GetIndexStmt extends Statement {
                         .addSelector(node, next, newNodes.get(0))
                         .build();
 
-                int ntEdge = hc1.attachedNonterminalEdgesOf(node).get(hc1.attachedNonterminalEdgesOf(node).size()-1);
-                MethodsToOperateOnLists.replaceNtEdgeWithUpdatedTentacles(hc1, ntEdge, node, nextConcreteNode);
+                // ntEdges are ordered after time of creation -> usage of method
+                //int ntEdge = hc1.attachedNonterminalEdgesOf(node).get(hc1.attachedNonterminalEdgesOf(node).size()-1);
+                int ntEdge = MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, hc1);
+                Nonterminal ntEdgeLabel = hc1.labelOf(ntEdge);
+                MethodsToOperateOnLists.replaceNtEdgeWithUpdatedTentacles(hc1, ntEdge, newNodes.get(0), nextConcreteNode);
 
-                ProgramState tmp = ps.shallowCopyWithUpdateHeap(hc1);
+                ProgramState tmp = ps.shallowCopyWithUpdateHeap(hc1.clone());
                 concreteRHS = new GeneralConcreteValue(scene().getType("java.util.LinkedList"), newNodes.get(0));
 
                 try {
@@ -140,14 +145,15 @@ public class GetIndexStmt extends Statement {
                 result.add(tmp.shallowCopyUpdatePC(nextPC));
 
 
-                // 2. add ntEdge and concrete node in front of ntEdge (since we start with hc1 here, we only have to a ntEdge between node and newNodes.get(0)
+                // 2. add ntEdge and concrete node in front of ntEdge
+                // (since we start with hc1 here, we only have to add an ntEdge between node and newNodes.get(0)
                 HeapConfiguration hc2 = hc1.clone();
                 TIntArrayList newAttachedNodes = new TIntArrayList();
                 newAttachedNodes.add(node);
                 newAttachedNodes.add(newNodes.get(0));
                 hc2.builder()
                         .removeSelector(node, next)
-                        .addNonterminalEdge(hc2.labelOf(ntEdge), newAttachedNodes)
+                        .addNonterminalEdge(ntEdgeLabel, newAttachedNodes)
                         .build();
 
                 tmp = ps.shallowCopyWithUpdateHeap(hc2);

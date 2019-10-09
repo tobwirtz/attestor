@@ -114,4 +114,16 @@ class MethodsToOperateOnLists {
 
         return result;
     }
+
+    static int getAttachedNtEdgeInNextDirection(int node, HeapConfiguration hc){
+        TIntArrayList attachedNtEdges = hc.attachedNonterminalEdgesOf(node);
+        int res = -1;
+        for(int i = 0; i < attachedNtEdges.size(); i++){
+            if(hc.attachedNodesOf(attachedNtEdges.get(i)).get(0) == node){
+                res = attachedNtEdges.get(i);
+            }
+        }
+        return res;
+    }
+
 }
