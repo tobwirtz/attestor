@@ -264,6 +264,15 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
 */
             }
 
+
+            if(method.getSignature().equals("<java.util.List: java.lang.Object get(int)>")){
+                soot.jimple.InstanceInvokeExpr instanceMethod = (soot.jimple.InstanceInvokeExpr) invokeExpr;
+                soot.Value sootBase = instanceMethod.getBase();
+                Value rhs = topLevel.translateValue(sootBase);
+                //return new AssignStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+                return new GetIndexStmt(this, lhs, rhs, pc + 1, LiveVariableHelper.extractLiveVariables(input));
+            }
+
             return new AssignInvoke(this, lhs, method, invokePrepare, pc + 1);
         /*} else if(stmt.getRightOp().toString().equals("new java.util.LinkedList")){
             Value rhs = topLevel.translateValue(stmt.getRightOp());
