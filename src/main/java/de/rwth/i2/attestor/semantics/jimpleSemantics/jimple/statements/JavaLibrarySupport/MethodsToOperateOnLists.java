@@ -19,6 +19,7 @@ class MethodsToOperateOnLists {
             TIntArrayList ntEdges = hc.attachedNonterminalEdgesOf(currentNode);
             if(ntEdges.size() > 2){
                 System.out.println("Input does not seem to be a List:" + hc);
+                return -1;
             }
             for(int i : ntEdges.toArray()){
                 TIntArrayList tentacles = hc.attachedNodesOf(i);

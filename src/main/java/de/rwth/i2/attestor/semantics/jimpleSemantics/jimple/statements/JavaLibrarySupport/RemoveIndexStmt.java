@@ -62,7 +62,8 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         //invokePrepare.prepareHeap(preparedState);
 
         // in Case the index is out of bounds (meaning it also handles the case for the empty list)
-        result.add(preparedState);
+        // TODO if exceptionstate gets created, this has to be changed
+        //result.add(preparedState);
 
         HeapConfiguration heapConfig = preparedState.getHeap();
 

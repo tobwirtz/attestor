@@ -6,6 +6,7 @@ import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.graph.heap.internal.InternalHeapConfiguration;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.AssignStmt;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InstanceInvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -16,6 +17,7 @@ import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.State;
 import de.rwth.i2.attestor.types.Type;
+import de.rwth.i2.attestor.util.SingleElementUtil;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
@@ -99,16 +101,20 @@ public class ValidationComponent extends SceneObject {
                     break;
 
                 case "RemoveIndexStmt":
-                    // create statement
-                    stmt = new RemoveIndexStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
-
-                    // compute successors / execute transfer function
-                    successors = stmt.computeSuccessors(inputState);
-
-                    // execute method on original list
+                    // TODO adjust if statement when solution for exceptionhandling is available
                     if(libraryList.size() > 0){
+                        // create statement
+                        stmt = new RemoveIndexStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
+
+                        // compute successors / execute transfer function
+                        successors = stmt.computeSuccessors(inputState);
+
+                        // execute method on original list
                         Random index = new Random();
                         libraryList.remove(index.nextInt(libraryList.size()));
+                    }else{
+                        // workaround: instead of throwing an index out of bound exception, the librarylist stays unchanged
+                        successors = SingleElementUtil.createSet(inputState.clone());
                     }
                     break;
 
@@ -116,7 +122,12 @@ public class ValidationComponent extends SceneObject {
             }
 
 
-
+            if(!sanityCheckForLists(successors, libraryList.size()+1)){
+                // +1 to max size needed because due to abstraction, attestor can make the list longer than it actually is
+                // (e.g. when applying the remove stmt)
+                System.out.println("Sanitycheck failed with listlength "+ libraryList.size());
+                return false;
+            }
 
             // check if there is a successor that matches the library list
             HeapConfiguration libraryResultHeap = dllToHC(libraryList, elementsAndVariableNames);
@@ -227,6 +238,35 @@ public class ValidationComponent extends SceneObject {
 
         }
         return elementsAndVariablenames;
+    }
+
+
+    private boolean sanityCheckForLists(Collection<ProgramState> states, int maxlength){
+
+        for(ProgramState state : states){
+            int concreteNodeCounter = 1;
+            HeapConfiguration hc = state.getHeap();
+            SelectorLabel next = scene().getSelectorLabel("next");
+
+            int node = hc.variableTargetOf("head");
+            TIntArrayList visitedNodes = new TIntArrayList();
+            visitedNodes.add(node);
+            if(!hc.selectorLabelsOf(node).contains(next)){
+                return false;
+            }
+            node = hc.selectorTargetOf(node, next);
+
+            while(node != hc.variableTargetOf("null")){
+
+                if(node == -1 || concreteNodeCounter > maxlength){
+                    return false;
+                }
+                node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next);
+                concreteNodeCounter++;
+            }
+        }
+
+        return true;
     }
 
 
