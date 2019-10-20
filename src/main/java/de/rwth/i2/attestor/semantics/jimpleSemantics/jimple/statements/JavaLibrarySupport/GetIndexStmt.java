@@ -79,6 +79,7 @@ public class GetIndexStmt extends Statement {
         programState = programState.clone();
         Set<ProgramState> result = new HashSet<>();
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
 
         int node;
@@ -92,7 +93,7 @@ public class GetIndexStmt extends Statement {
         // iterate over all elements of the original list
         HeapConfiguration hc = programState.getHeap();
         TIntArrayList visitedNodes = new TIntArrayList();
-        node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next);
+        node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
 
         do {
             ProgramState ps = programState.clone();
@@ -120,7 +121,7 @@ public class GetIndexStmt extends Statement {
                 // 1. add node between current node and ntEdge
                 HeapConfiguration hc1 = hc.clone();
                 TIntArrayList newNodes = new TIntArrayList();
-                int nextConcreteNode = MethodsToOperateOnLists.getNextConcreteNodeInList(hc1, visitedNodes, node, next);
+                int nextConcreteNode = MethodsToOperateOnLists.getNextConcreteNodeInList(hc1, visitedNodes, node, next, getFirst);
                 hc1.builder()
                         .addNodes(scene().getType("java.util.LinkedList"), 1, newNodes)
                         .addSelector(node, next, newNodes.get(0))
@@ -171,7 +172,7 @@ public class GetIndexStmt extends Statement {
             }
 
             // set node to next concrete node and continue loop
-            node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next);
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
 
 
         }while(node != hc.variableTargetOf("null"));

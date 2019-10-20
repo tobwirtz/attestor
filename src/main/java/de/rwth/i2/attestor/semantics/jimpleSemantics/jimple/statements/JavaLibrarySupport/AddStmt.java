@@ -62,18 +62,7 @@ public class AddStmt extends Statement implements InvokeCleanup {
         HeapConfiguration heapConfig = preparedState.getHeap();
 
 
-
-        // collect nodes, that have a nonterminal edge in the "next" direction
-        TIntArrayList hasNonterminalEdgeNextDirection = new TIntArrayList();
-        TIntArrayList hasNonterminalEdgePrevDirection = new TIntArrayList();
-        int[] nTEdges = heapConfig.nonterminalEdges().toArray();
-        for (int i : nTEdges
-             ) {
-            hasNonterminalEdgeNextDirection.add(heapConfig.attachedNodesOf(i).get(0));
-            hasNonterminalEdgePrevDirection.add(heapConfig.attachedNodesOf(i).get(1));
-        }
-
-        // get to the end of the list
+        // set node to head pointer and iterate to the end of the list
         int node;
         try{
             node = ((GeneralConcreteValue) baseValue.evaluateOn(programState)).getNode();
@@ -81,52 +70,51 @@ public class AddStmt extends Statement implements InvokeCleanup {
             logger.error(e.getErrorMessage(this));
             node = -1;
         }
+
+
         TIntArrayList newNodes = new TIntArrayList();
         SelectorLabel next = scene().getSelectorLabel("next");
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
 
 
         System.out.println("Before (addStmt):" + heapConfig);
-        System.out.println("Set:" + hasNonterminalEdgeNextDirection.toString());
 
-        while(heapConfig.selectorTargetOf(node, next) != heapConfig.variableTargetOf("null") && node != heapConfig.variableTargetOf("null")){
-            System.out.println("Node before going to next:" + node);
-            if(hasNonterminalEdgeNextDirection.contains(node)){
-                if(hasNonterminalEdgePrevDirection.contains(heapConfig.variableTargetOf("null"))){
-                    break;
-                }
-                node = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(node).get(0)).get(1);
-            }else if(heapConfig.selectorLabelsOf(node).contains(next)){
-                node = heapConfig.selectorTargetOf(node, next);
-            }else{
-                System.out.println("Input auf der die Methode operieren soll scheint keine Liste zu sein");
-                return null;
-            }
+        TIntArrayList visitedNodes = new TIntArrayList();
+        visitedNodes.add(node);
+
+
+        // if list is empty, node stays headpointer, else node gets set to first element
+        if(heapConfig.selectorTargetOf(node, getFirst) != heapConfig.variableTargetOf("null")){
+            node = heapConfig.selectorTargetOf(node, getFirst);
         }
 
-        if(!hasNonterminalEdgeNextDirection.contains(node)){
+
+        while(MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst) != heapConfig.variableTargetOf("null")
+                && !heapConfig.selectorLabelsOf(node).contains(getFirst)){
+
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
+
+        }
+
+
+        // In case between the last node and the null node is an ntEdge, the added node gets canonicalized by not adding it manually
+        if(MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, heapConfig) == -1){
+
+            SelectorLabel sel;
+            if(heapConfig.selectorLabelsOf(node).contains(getFirst)) {
+                sel = getFirst;
+            }else{
+                sel = next;
+            }
+
             // add node at the end of the list
-            heapConfig.builder().addNodes(scene().getType("java.util.LinkedList"), 1, newNodes);
-            heapConfig.builder().removeSelector(node, next);
-            heapConfig.builder().addSelector(node, next, newNodes.get(0));
-            heapConfig.builder().addSelector(newNodes.get(0), next, heapConfig.variableTargetOf("null"));
-            heapConfig.builder().build();
+            heapConfig.builder()
+                    .addNodes(scene().getType("java.util.LinkedList"), 1, newNodes)
+                    .removeSelector(node, sel)
+                    .addSelector(node, sel, newNodes.get(0))
+                    .addSelector(newNodes.get(0), next, heapConfig.variableTargetOf("null"))
+                    .build();
 
-        /* // this code works for a grammar, in which the last node of the list does not have a next pointer and is != null-node
-        while(heapConfig.selectorLabelsOf(node).contains(next) || hasNonterminalEdgeNextDirection.contains(node)){
-
-            if(heapConfig.selectorLabelsOf(node).contains(next)){
-                node = heapConfig.selectorTargetOf(node, next);
-            }else{
-                node = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(node).get(0)).get(1);
-            }
-
-        }
-
-        // add node at end of list (the last node does not have a next pointer (!= null)
-        heapConfig.builder().addNodes(scene().getType("java.util.LinkedList"), 1, newNodes);
-        heapConfig.builder().addSelector(node, next, newNodes.get(0));
-        heapConfig.builder().build();
-*/
         }
 
 

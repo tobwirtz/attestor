@@ -81,12 +81,13 @@ public class ClearStmt extends Statement implements InvokeCleanup {
         System.out.println("Before:" + heapConfig);
         System.out.println("Set:" + hasNonterminalEdge.toString());
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
 
-        int nodeToBeRemoved = heapConfig.selectorTargetOf(node, next);
+        int nodeToBeRemoved = heapConfig.selectorTargetOf(node, getFirst);
         heapConfig.builder()
-                .removeSelector(node, next)
-                .addSelector(node, next, heapConfig.variableTargetOf("null"))
+                .removeSelector(node, getFirst)
+                .addSelector(node, getFirst, heapConfig.variableTargetOf("null"))
                 .build();
 
 
@@ -96,15 +97,9 @@ public class ClearStmt extends Statement implements InvokeCleanup {
 
         while(nodeToBeRemoved != heapConfig.variableTargetOf("null")){
             System.out.println("Node before going to next:" + nodeToBeRemoved);
-            nodesToBeRemoved.add(nodeToBeRemoved);
-            if(hasNonterminalEdge.contains(nodeToBeRemoved)){
-                nodeToBeRemoved = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(nodeToBeRemoved).get(0)).get(1);
-            }else if(heapConfig.selectorLabelsOf(nodeToBeRemoved).contains(next)){
-                nodeToBeRemoved = heapConfig.selectorTargetOf(nodeToBeRemoved, next);
-            }else{
-                System.out.println("Input of ClearStmt method does not seem to be a List");
-                return null;
-            }
+
+            nodeToBeRemoved = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, nodesToBeRemoved, nodeToBeRemoved, next, getFirst);
+
         }
 
         // delete old nodes

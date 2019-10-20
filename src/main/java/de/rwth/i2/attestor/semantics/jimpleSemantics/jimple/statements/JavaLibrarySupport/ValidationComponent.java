@@ -134,7 +134,7 @@ public class ValidationComponent extends SceneObject {
             for(ProgramState succ : successors){
 
                 // abstraction step for successors
-                HeapConfiguration succHC = this.scene().strategies().getCanonicalizationStrategy().canonicalize(succ.getHeap());
+                HeapConfiguration succHC = this.scene().strategies().getAggressiveCanonicalizationStrategy().canonicalize(succ.getHeap());
 
                 if(libraryResultHeap.equals(succHC)){
                     result = true;
@@ -155,7 +155,9 @@ public class ValidationComponent extends SceneObject {
         TIntArrayList nodes = new TIntArrayList();
 
         SelectorLabel next = scene().getSelectorLabel("next");
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         //SelectorLabel prev = scene().getSelectorLabel("prev");
+        Type headType = scene().getType("java.util.LinkedListPointer");
         Type type = scene().getType("java.util.LinkedList");
 
         int index = 0;
@@ -169,7 +171,7 @@ public class ValidationComponent extends SceneObject {
         index = index+2;
 
         // add head node (not an element node)
-        builder = builder.addNodes(type, 1, nodes);
+        builder = builder.addNodes(headType, 1, nodes);
         builder = builder.addVariableEdge("head", nodes.get(index));
         index++;
 
@@ -178,8 +180,11 @@ public class ValidationComponent extends SceneObject {
 
             builder = builder.addNodes(type, 1, nodes);
 
-            builder = builder.addSelector(nodes.get(index-1), next, nodes.get(index));
-            //result.builder().addSelector(index, prev, index-1);
+            if(index == 3){
+                builder = builder.addSelector(nodes.get(index-1), getFirst, nodes.get(index));
+            }else {
+                builder = builder.addSelector(nodes.get(index - 1), next, nodes.get(index));
+            }
 
 
             if(elementsHavingVariables.contains(element)){
@@ -194,12 +199,17 @@ public class ValidationComponent extends SceneObject {
         // add null node and let last node point with next to null node
         builder = builder.addNodes(type, 1, nodes);
         builder = builder.addVariableEdge(Constants.NULL, nodes.get(index));
-        builder = builder.addSelector(nodes.get(index-1), next, nodes.get(index));
+        if(index == 3){
+            builder = builder.addSelector(nodes.get(index-1), getFirst, nodes.get(index));
+        }else {
+            builder = builder.addSelector(nodes.get(index-1), next, nodes.get(index));
+        }
+
 
         result = builder.build();
 
         // abstraction needed
-        result = this.scene().strategies().getCanonicalizationStrategy().canonicalize(result);
+        result = this.scene().strategies().getAggressiveCanonicalizationStrategy().canonicalize(result);
 
         return result;
     }
@@ -246,22 +256,23 @@ public class ValidationComponent extends SceneObject {
         for(ProgramState state : states){
             int concreteNodeCounter = 1;
             HeapConfiguration hc = state.getHeap();
+            SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
             SelectorLabel next = scene().getSelectorLabel("next");
 
             int node = hc.variableTargetOf("head");
             TIntArrayList visitedNodes = new TIntArrayList();
             visitedNodes.add(node);
-            if(!hc.selectorLabelsOf(node).contains(next)){
+            if(!hc.selectorLabelsOf(node).contains(getFirst)){
                 return false;
             }
-            node = hc.selectorTargetOf(node, next);
+            node = hc.selectorTargetOf(node, getFirst);
 
             while(node != hc.variableTargetOf("null")){
 
                 if(node == -1 || concreteNodeCounter > maxlength){
                     return false;
                 }
-                node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next);
+                node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
                 concreteNodeCounter++;
             }
         }

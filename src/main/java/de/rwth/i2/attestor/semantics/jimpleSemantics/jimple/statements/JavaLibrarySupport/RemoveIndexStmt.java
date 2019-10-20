@@ -61,9 +61,6 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         ProgramState preparedState = programState.shallowCopyUpdatePC(nextPC);
         //invokePrepare.prepareHeap(preparedState);
 
-        // in Case the index is out of bounds (meaning it also handles the case for the empty list)
-        // TODO if exceptionstate gets created, this has to be changed
-        //result.add(preparedState);
 
         HeapConfiguration heapConfig = preparedState.getHeap();
 
@@ -78,6 +75,13 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             hasNonterminalEdgePrevDirection.add(heapConfig.attachedNodesOf(i).get(1));
         }
 
+        // TODO add exception state to result
+
+        if(!heapConfig.nonterminalEdges().isEmpty()){
+            // handles case, when the node to be removed is abstracted
+            result.add(preparedState.clone());
+        }
+
 
         // set node to base value
         int node;
@@ -88,6 +92,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             node = -1;
         }
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
 
 
@@ -98,7 +103,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
         int prevNode = node;
         TIntArrayList visitedNodes = new TIntArrayList();
-        node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+        node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
 
         while(node != heapConfig.variableTargetOf("null")){
 
@@ -106,19 +111,23 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             if(heapConfig.selectorLabelsOf(node).contains(next)){
                 // case when node has a concrete successor
                 HeapConfiguration copy = heapConfig.clone();
-                copy = removeNodeWithConcreteSuccessor(copy, node, prevNode, next);
+                if(copy.selectorLabelsOf(prevNode).contains(getFirst)){
+                    copy = removeNodeWithConcreteSuccessor(copy, node, prevNode, next, getFirst);
+                }else{
+                    copy = removeNodeWithConcreteSuccessor(copy, node, prevNode, next, next);
+                }
 
                 result.add(preparedState.shallowCopyWithUpdateHeap(copy));
 
-            }else{
+            }else{ // TODO use method from MethodsToOperateOnLists
                 // the next node is ntEdge
-                int ntEdgeToBeMaterialized = heapConfig.attachedNonterminalEdgesOf(node).get(heapConfig.attachedNonterminalEdgesOf(node).size()-1);
+                int ntEdgeToBeMaterialized = MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, heapConfig);
 
                 HeapConfiguration copyWithFirstRule = heapConfig.clone();
                 HeapConfiguration copyWithSecondRule = heapConfig.clone();
 
                 // materialize with first rule
-                int nextConcreteNode = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(node).get(0)).get(1);
+                int nextConcreteNode = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
                 copyWithFirstRule.builder().removeNonterminalEdge(ntEdgeToBeMaterialized)
                         .addSelector(node, next, nextConcreteNode).build();
 
@@ -134,8 +143,13 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
                 //copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).replace(0, newNode.get(0));
 
                 // remove nodes
-                copyWithFirstRule = removeNodeWithConcreteSuccessor(copyWithFirstRule, node, prevNode, next);
-                copyWithSecondRule = removeNodeWithConcreteSuccessor(copyWithSecondRule, node, prevNode, next);
+                if(heapConfig.selectorLabelsOf(prevNode).contains(getFirst)){
+                    copyWithFirstRule = removeNodeWithConcreteSuccessor(copyWithFirstRule, node, prevNode, next, getFirst);
+                    copyWithSecondRule = removeNodeWithConcreteSuccessor(copyWithSecondRule, node, prevNode, next, getFirst);
+                }else {
+                    copyWithFirstRule = removeNodeWithConcreteSuccessor(copyWithFirstRule, node, prevNode, next, next);
+                    copyWithSecondRule = removeNodeWithConcreteSuccessor(copyWithSecondRule, node, prevNode, next, next);
+                }
 
                 result.add(preparedState.shallowCopyWithUpdateHeap(copyWithFirstRule));
                 result.add(preparedState.shallowCopyWithUpdateHeap(copyWithSecondRule));
@@ -143,7 +157,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
             // get to next concrete node in the list
             prevNode = node;
-            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
 
         }
 
@@ -161,16 +175,18 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
      * node needs to have a materialized successor node
      * @param heapConfig the HeapConfiguration on which the node is supposed to be removed
      * @param node node to be removed
-     * @param prevnode node pointing with next selector to the node to be removed
+     * @param prevnode node pointing with prevnodeSel to the node to be removed
      * @param next selectorlabel next
      * @return the heapconfiguration with the node removed from it
      */
-    private HeapConfiguration removeNodeWithConcreteSuccessor(HeapConfiguration heapConfig, int node, int prevnode, SelectorLabel next){
+    private HeapConfiguration removeNodeWithConcreteSuccessor(HeapConfiguration heapConfig, int node, int prevnode, SelectorLabel next, SelectorLabel prevnodeSel){
         HeapConfiguration copy = heapConfig.clone();
-        if(heapConfig.selectorLabelsOf(node).contains(next) && heapConfig.selectorLabelsOf(prevnode).contains(next) && heapConfig.selectorTargetOf(prevnode, next) == node){
+        if(heapConfig.selectorLabelsOf(node).contains(next)
+                && heapConfig.selectorLabelsOf(prevnode).contains(prevnodeSel)
+                && heapConfig.selectorTargetOf(prevnode, prevnodeSel) == node){
             // case when the previous and the next list-nodes are materialized
-            copy.builder().removeSelector(prevnode, next)
-                    .addSelector(prevnode, next, copy.selectorTargetOf(node, next))
+            copy.builder().removeSelector(prevnode, prevnodeSel)
+                    .addSelector(prevnode, prevnodeSel, copy.selectorTargetOf(node, next))
                     .removeNode(node)
                     .build();
             return copy;

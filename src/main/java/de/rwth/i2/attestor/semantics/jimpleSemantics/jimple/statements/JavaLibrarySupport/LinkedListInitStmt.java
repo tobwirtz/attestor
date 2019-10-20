@@ -70,17 +70,19 @@ public class LinkedListInitStmt extends Statement implements InvokeCleanup {
             node = -1;
         }
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
-/*
-        heapConfig.builder().addSelector(node, next, heapConfig.variableTargetOf("null"));
-        heapConfig.builder().build();
 
- */
-/*
+        heapConfig.builder()
+                .replaceNodeType(node, scene().getType("java.util.LinkedListPointer"))
+                .replaceSelector(node, next, getFirst)
+                .build();
+
+
 
         System.out.println("After init:" + heapConfig);
 
-*/
+
         ProgramState result = preparedState.shallowCopyWithUpdateHeap(heapConfig);
         invokePrepare.cleanHeap(result);
         result.setProgramCounter(nextPC);

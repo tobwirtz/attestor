@@ -85,19 +85,29 @@ public class AddAtIndexStmt extends Statement implements InvokeCleanup {
         }
 
         SelectorLabel next = scene().getSelectorLabel("next");
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
 
         System.out.println("Before (AddAtIndexStmt):" + heapConfig);
 
         TIntArrayList visitedNodes = new TIntArrayList();
+
+        // add node at index 0 and add resulting state to result
+        HeapConfiguration newHC = heapConfig.clone();
+        MethodsToOperateOnLists.insertElementIntoListAtNextPosition(newHC, node, getFirst, next, scene().getType("java.util.LinkedList"));
+        result.add(preparedState.shallowCopyWithUpdateHeap(newHC));
+
+        node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
+
+        // add nodes at all other positions
         while(node != heapConfig.variableTargetOf("null")){
 
             // add node and add resulting state to result
-            HeapConfiguration newHC = heapConfig.clone();
-            MethodsToOperateOnLists.insertElementIntoListAtNextPosition(newHC, node, next, scene().getType("java.util.LinkedList"));
+            newHC = heapConfig.clone();
+            MethodsToOperateOnLists.insertElementIntoListAtNextPosition(newHC, node, next, next, scene().getType("java.util.LinkedList"));
             result.add(preparedState.shallowCopyWithUpdateHeap(newHC));
 
             // continue iterating through original list
-            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next);
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
         }
 
 /*

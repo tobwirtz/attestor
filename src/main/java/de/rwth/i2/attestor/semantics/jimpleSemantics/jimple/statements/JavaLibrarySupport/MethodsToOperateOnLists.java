@@ -11,16 +11,22 @@ import java.util.Set;
 class MethodsToOperateOnLists {
 
 
-    static int getNextConcreteNodeInList(HeapConfiguration hc, TIntArrayList visitedNodes, int currentNode, SelectorLabel next){
+    static int getNextConcreteNodeInList(HeapConfiguration hc, TIntArrayList visitedNodes, int currentNode, SelectorLabel next, SelectorLabel getFirst){
         visitedNodes.add(currentNode);
         if(hc.selectorLabelsOf(currentNode).contains(next)){
             currentNode = hc.selectorTargetOf(currentNode, next);
+        }else if(hc.selectorLabelsOf(currentNode).contains(getFirst)){
+            currentNode = hc.selectorTargetOf(currentNode, getFirst);
         }else{
             TIntArrayList ntEdges = hc.attachedNonterminalEdgesOf(currentNode);
             if(ntEdges.size() > 2){
                 System.out.println("Input does not seem to be a List:" + hc);
                 return -1;
             }
+
+            int followingNtEdge = getAttachedNtEdgeInNextDirection(currentNode, hc);
+            currentNode = hc.attachedNodesOf(followingNtEdge).get(1);
+            /*
             for(int i : ntEdges.toArray()){
                 TIntArrayList tentacles = hc.attachedNodesOf(i);
                 for(int j : tentacles.toArray()){
@@ -33,6 +39,10 @@ class MethodsToOperateOnLists {
                     break;
                 }
             }
+             */
+        }
+        if(currentNode == -1){
+            System.out.println("Input does not seem to be a List: " + hc);
         }
         return currentNode;
     }
@@ -48,23 +58,23 @@ class MethodsToOperateOnLists {
                 .build();
     }
 
-    static void insertElementIntoListAtNextPosition(HeapConfiguration hc, int node, SelectorLabel next, Type nodeType){
+    static void insertElementIntoListAtNextPosition(HeapConfiguration hc, int node, SelectorLabel currentSel, SelectorLabel followingSel, Type nodeType){
 
         TIntArrayList newNodes = new TIntArrayList();
 
-        if(hc.selectorLabelsOf(node).contains(next)){
+        if(hc.selectorLabelsOf(node).contains(currentSel)){
 
-            int followingNode = hc.selectorTargetOf(node,next);
+            int followingNode = hc.selectorTargetOf(node,currentSel);
 
             hc.builder().addNodes(nodeType, 1, newNodes)
-                    .removeSelector(node, next)
-                    .addSelector(node, next, newNodes.get(0))
-                    .addSelector(newNodes.get(0), next, followingNode)
+                    .removeSelector(node, currentSel)
+                    .addSelector(node, currentSel, newNodes.get(0))
+                    .addSelector(newNodes.get(0), followingSel, followingNode)
                     .build();
 
         }else if(node != hc.variableTargetOf("null")) {
             
-            int followingNtEdge = hc.attachedNonterminalEdgesOf(node).get(hc.attachedNonterminalEdgesOf(node).size()-1);
+            int followingNtEdge = getAttachedNtEdgeInNextDirection(node, hc);
             TIntArrayList tentacles = hc.attachedNodesOf(followingNtEdge);
 
             int nodeAfterNtEdge;
@@ -76,7 +86,7 @@ class MethodsToOperateOnLists {
             }
 
             hc.builder().addNodes(nodeType, 1, newNodes)
-                    .addSelector(node, next, newNodes.get(0))
+                    .addSelector(node, currentSel, newNodes.get(0))
                     .build();
 
             replaceNtEdgeWithUpdatedTentacles(hc, followingNtEdge, newNodes.get(0), nodeAfterNtEdge);
@@ -90,13 +100,13 @@ class MethodsToOperateOnLists {
         Set<HeapConfiguration> result = new LinkedHashSet<>();
 
         // the next node needs to be an ntEdge
-        int ntEdgeToBeMaterialized = heapConfig.attachedNonterminalEdgesOf(node).get(heapConfig.attachedNonterminalEdgesOf(node).size()-1);
+        int ntEdgeToBeMaterialized = MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, heapConfig);
 
         HeapConfiguration copyWithFirstRule = heapConfig.clone();
         HeapConfiguration copyWithSecondRule = heapConfig.clone();
 
         // materialize with first rule
-        int nextConcreteNode = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(node).get(0)).get(1);
+        int nextConcreteNode = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(node).get(0)).get(1); // TODO use method from this class
         copyWithFirstRule.builder().removeNonterminalEdge(ntEdgeToBeMaterialized)
                 .addSelector(node, next, nextConcreteNode).build();
 
