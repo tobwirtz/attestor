@@ -45,7 +45,7 @@ public class ValidationComponent extends SceneObject {
             result = false;
 
             // add variables
-            Map<Object, String> elementsAndVariableNames = addVariablesRandomlyToList(l, inversePercentageForVariable);
+            Map<Object, List<String>> elementsAndVariableNames = addVariablesRandomlyToList(l, inversePercentageForVariable);
             // dllToHC
             ProgramState inputState = scene().createProgramState(dllToHC(l, elementsAndVariableNames));
 
@@ -149,7 +149,7 @@ public class ValidationComponent extends SceneObject {
         return result;
     }
 
-    private HeapConfiguration dllToHC(List list, Map<Object, String> variablesAndElements){
+    private HeapConfiguration dllToHC(List list, Map<Object, List<String>> variablesAndElements){
         Set<Object> elementsHavingVariables = variablesAndElements.keySet();
         HeapConfiguration result = new InternalHeapConfiguration();
         TIntArrayList nodes = new TIntArrayList();
@@ -189,7 +189,9 @@ public class ValidationComponent extends SceneObject {
 
             if(elementsHavingVariables.contains(element)){
                 // add variable to nodes.get(index)
-                builder = builder.addVariableEdge(variablesAndElements.get(element), nodes.get(index));
+                for(String varName : variablesAndElements.get(element)) {
+                    builder = builder.addVariableEdge(varName, nodes.get(index));
+                }
 
             }
 
@@ -232,9 +234,9 @@ public class ValidationComponent extends SceneObject {
         return result;
     }
 
-    private Map<Object, String> addVariablesRandomlyToList(List<Object> list, int inversePercentageForVariable){
+    private Map<Object, List<String>> addVariablesRandomlyToList(List<Object> list, int inversePercentageForVariable){
 
-        Map<Object, String> elementsAndVariablenames = new HashMap<>();
+        Map<Object, List<String>> elementsAndVariablenames = new HashMap<>();
         int variableCount = 1;
         Random rand = new Random();
         for (Object listElement : list) {
@@ -242,7 +244,9 @@ public class ValidationComponent extends SceneObject {
 
             if (getsVariable == 1) {
                 // save in Map
-                elementsAndVariablenames.put(listElement, "Var " + variableCount);
+                List<String> vars = new LinkedList<>();
+                vars.add("Var " + variableCount);
+                elementsAndVariablenames.put(listElement, vars);
                 variableCount++;
             }
 
