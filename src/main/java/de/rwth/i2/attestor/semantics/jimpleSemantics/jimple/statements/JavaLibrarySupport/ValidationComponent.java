@@ -6,7 +6,6 @@ import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.graph.heap.internal.InternalHeapConfiguration;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
-import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.AssignStmt;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InstanceInvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -15,7 +14,6 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.SettableValue
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
 import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
-import de.rwth.i2.attestor.stateSpaceGeneration.State;
 import de.rwth.i2.attestor.types.Type;
 import de.rwth.i2.attestor.util.SingleElementUtil;
 import gnu.trove.list.array.TIntArrayList;
@@ -98,6 +96,30 @@ public class ValidationComponent extends SceneObject {
                     break;
 
                 case "GetIndexStmt":
+                    if(libraryList.size() > 0){
+                        // create statement
+                        //lhs is settable test-value, rhs is (Value) Base/head
+                        SettableValue lhs = new Local(scene().getType("java.lang.Object"),"GetIndexStmtTestVariable");
+                        stmt = new GetIndexStmt(this, lhs, new Local(inputState.getVariableTarget("head").type(), "head"), 1, new HashSet<>());
+
+                        successors = stmt.computeSuccessors(inputState);
+
+
+                        // execute method on original list
+
+                        Random index = new Random();
+                        int randomIndex = index.nextInt(libraryList.size());
+                        if(elementsAndVariableNames.containsKey(libraryList.get(randomIndex))){
+                            elementsAndVariableNames.get(libraryList.get(randomIndex)).add("GetIndexStmtTestVariable");
+                        }else{
+                            List<String> newVars = new LinkedList<>();
+                            newVars.add("GetIndexStmtTestVariable");
+                            elementsAndVariableNames.put(libraryList.get(randomIndex), newVars);
+                        }
+
+                    }else{
+                        successors = SingleElementUtil.createSet(inputState.clone());
+                    }
                     break;
 
                 case "RemoveIndexStmt":

@@ -72,6 +72,7 @@ public class ValidationComponentTest {
         assertTrue("AddStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddStmt"));
         assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddAtIndexStmt"));
         assertTrue("ClearStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "ClearStmt"));
+        assertTrue("GetIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "GetIndexStmt"));
         assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));
     }
 }
