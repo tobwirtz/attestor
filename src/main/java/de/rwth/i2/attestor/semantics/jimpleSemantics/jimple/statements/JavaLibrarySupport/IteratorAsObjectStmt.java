@@ -72,6 +72,7 @@ public class IteratorAsObjectStmt extends Statement {
         programState = programState.clone();
         //ConcreteValue concreteRHS;
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
 
         int baseNode;
@@ -87,7 +88,7 @@ public class IteratorAsObjectStmt extends Statement {
         TIntArrayList newNodes = new TIntArrayList();
         HeapConfiguration hc = programState.getHeap();
         hc.builder().addNodes(scene().getType("java.util.Iterator"), 1, newNodes)
-                .addSelector(newNodes.get(0), scene().getSelectorLabel("curr"), hc.selectorTargetOf(baseNode, next))
+                .addSelector(newNodes.get(0), scene().getSelectorLabel("curr"), hc.selectorTargetOf(baseNode, getFirst))
                 .build();
 
         int iteratorObjectNode = newNodes.get(0);
