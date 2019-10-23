@@ -4,6 +4,7 @@ import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.programState.defaultState.ExceptionProgramState;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -70,7 +71,12 @@ public class AddAtIndexStmt extends Statement implements InvokeCleanup {
 
         // in Case the index refers to a node, that is not materialized yet
         // in this case the abstraction after the statement will yield the same ProgramState as before
-        result.add(preparedState);
+        if(preparedState.getHeap().nonterminalEdges().size() > 0) {
+            result.add(preparedState);
+        }
+
+        // case when Index is out of Bounds
+        result.add(new ExceptionProgramState(preparedState.getHeap().clone(), "IndexOutOfBoundsException"));
 
         HeapConfiguration heapConfig = preparedState.getHeap();
 

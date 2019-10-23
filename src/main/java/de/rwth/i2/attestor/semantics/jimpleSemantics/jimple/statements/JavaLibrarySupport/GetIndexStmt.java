@@ -7,6 +7,7 @@ import de.rwth.i2.attestor.graph.Nonterminal;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.programState.defaultState.ExceptionProgramState;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.GeneralConcreteValue;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.NullPointerDereferenceException;
@@ -79,6 +80,9 @@ public class GetIndexStmt extends Statement {
         programState = programState.clone();
         Set<ProgramState> result = new HashSet<>();
 
+        // Case when Index is out of Bounds
+        result.add(new ExceptionProgramState(programState.getHeap().clone(), "IndexOutOfBoundsException"));
+
         SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
 
@@ -95,7 +99,7 @@ public class GetIndexStmt extends Statement {
         TIntArrayList visitedNodes = new TIntArrayList();
         node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
 
-        do {
+        while(node != hc.variableTargetOf("null")){
             ProgramState ps = programState.clone();
 
             // For each materialized node, add ProgramState to result with variable pointing to node
@@ -175,7 +179,7 @@ public class GetIndexStmt extends Statement {
             node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
 
 
-        }while(node != hc.variableTargetOf("null"));
+        }
 
 
         return result;

@@ -6,6 +6,7 @@ import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.graph.heap.internal.InternalHeapConfiguration;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.programState.defaultState.ExceptionProgramState;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InstanceInvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -53,6 +54,10 @@ public class ValidationComponent extends SceneObject {
             ArrayList<Value> arguments = new ArrayList<>();
             InvokeHelper instanceHelper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
             Statement stmt;
+            SettableValue lhs;
+            String exception = "";
+            Random rand = new Random();
+            int maxIndex = (int) Math.round((libraryList.size()+1)*1.15);
 
             switch(stmtToBeValidated){
 
@@ -75,11 +80,12 @@ public class ValidationComponent extends SceneObject {
                     successors = stmt.computeSuccessors(inputState);
 
                     // execute method on original list
-                    if(libraryList.size() == 0){
-                        libraryList.add(0, "Test");
-                    }else{
-                        Random index = new Random();
-                        libraryList.add(index.nextInt(libraryList.size()), "Test");
+
+                    int index = rand.nextInt(maxIndex);
+                    try {
+                        libraryList.add(index, "Test");
+                    }catch (IndexOutOfBoundsException e){
+                        exception = "IndexOutOfBoundsException";
                     }
 
                     break;
@@ -96,48 +102,49 @@ public class ValidationComponent extends SceneObject {
                     break;
 
                 case "GetIndexStmt":
-                    if(libraryList.size() > 0){
-                        // create statement
-                        //lhs is settable test-value, rhs is (Value) Base/head
-                        SettableValue lhs = new Local(scene().getType("java.lang.Object"),"GetIndexStmtTestVariable");
-                        stmt = new GetIndexStmt(this, lhs, new Local(inputState.getVariableTarget("head").type(), "head"), 1, new HashSet<>());
 
-                        successors = stmt.computeSuccessors(inputState);
+                    // create statement
+                    //lhs is settable test-value, rhs is (Value) Base/head
+                    lhs = new Local(scene().getType("java.lang.Object"),"GetIndexStmtTestVariable");
+                    stmt = new GetIndexStmt(this, lhs, new Local(inputState.getVariableTarget("head").type(), "head"), 1, new HashSet<>());
+
+                    successors = stmt.computeSuccessors(inputState);
 
 
-                        // execute method on original list
+                    // execute method on original list
 
-                        Random index = new Random();
-                        int randomIndex = index.nextInt(libraryList.size());
-                        if(elementsAndVariableNames.containsKey(libraryList.get(randomIndex))){
+                    try {
+                        int randomIndex = rand.nextInt(maxIndex);
+                        if (elementsAndVariableNames.containsKey(libraryList.get(randomIndex))) {
                             elementsAndVariableNames.get(libraryList.get(randomIndex)).add("GetIndexStmtTestVariable");
-                        }else{
+                        } else {
                             List<String> newVars = new LinkedList<>();
                             newVars.add("GetIndexStmtTestVariable");
                             elementsAndVariableNames.put(libraryList.get(randomIndex), newVars);
                         }
 
-                    }else{
-                        successors = SingleElementUtil.createSet(inputState.clone());
+                    }catch (IndexOutOfBoundsException e){
+                        exception = "IndexOutOfBoundsException";
                     }
+
+
                     break;
 
                 case "RemoveIndexStmt":
-                    // TODO adjust if statement when solution for exceptionhandling is available
-                    if(libraryList.size() > 0){
-                        // create statement
-                        stmt = new RemoveIndexStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
 
-                        // compute successors / execute transfer function
-                        successors = stmt.computeSuccessors(inputState);
+                    // create statement
+                    stmt = new RemoveIndexStmt(this, instanceHelper, new Local(inputState.getVariableTarget("head").type(), "head"), 1);
 
-                        // execute method on original list
-                        Random index = new Random();
-                        libraryList.remove(index.nextInt(libraryList.size()));
-                    }else{
-                        // workaround: instead of throwing an index out of bound exception, the librarylist stays unchanged
-                        successors = SingleElementUtil.createSet(inputState.clone());
+                    // compute successors / execute transfer function
+                    successors = stmt.computeSuccessors(inputState);
+
+                    // execute method on original list
+                    try {
+                        libraryList.remove(rand.nextInt(maxIndex));
+                    } catch (IndexOutOfBoundsException e){
+                        exception = "IndexOutOfBoundsException";
                     }
+
                     break;
 
                 default: return false;
@@ -155,10 +162,14 @@ public class ValidationComponent extends SceneObject {
             HeapConfiguration libraryResultHeap = dllToHC(libraryList, elementsAndVariableNames);
             for(ProgramState succ : successors){
 
+                if(succ instanceof ExceptionProgramState && ((ExceptionProgramState) succ).exceptionMessage.equals(exception)){
+                    result = true;
+                }
+
                 // abstraction step for successors
                 HeapConfiguration succHC = this.scene().strategies().getAggressiveCanonicalizationStrategy().canonicalize(succ.getHeap());
 
-                if(libraryResultHeap.equals(succHC)){
+                if(libraryResultHeap.equals(succHC) && exception.equals("")){
                     result = true;
                 }
             }

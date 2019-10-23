@@ -4,6 +4,7 @@ import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.programState.defaultState.ExceptionProgramState;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -75,7 +76,8 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             hasNonterminalEdgePrevDirection.add(heapConfig.attachedNodesOf(i).get(1));
         }
 
-        // TODO add exception state to result
+        // Case when index is out of bounds
+        result.add(new ExceptionProgramState(programState.getHeap().clone(), "IndexOutOfBoundsException"));
 
         if(!heapConfig.nonterminalEdges().isEmpty()){
             // handles case, when the node to be removed is abstracted
