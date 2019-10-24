@@ -80,7 +80,6 @@ public class ValidationComponent extends SceneObject {
                     successors = stmt.computeSuccessors(inputState);
 
                     // execute method on original list
-
                     int index = rand.nextInt(maxIndex);
                     try {
                         libraryList.add(index, "Test");
@@ -112,7 +111,6 @@ public class ValidationComponent extends SceneObject {
 
 
                     // execute method on original list
-
                     try {
                         int randomIndex = rand.nextInt(maxIndex);
                         if (elementsAndVariableNames.containsKey(libraryList.get(randomIndex))) {
@@ -248,6 +246,42 @@ public class ValidationComponent extends SceneObject {
 
         return result;
     }
+
+
+    private List<Object> concretizedHCtoDLL(HeapConfiguration hc, Map<Object, List<String>> variablesAndElements){
+
+        List<Object> res = new LinkedList<>();
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
+        SelectorLabel next = scene().getSelectorLabel("next");
+        int index = 0;
+
+        int node = hc.variableTargetOf("head");
+        TIntArrayList visitedNodes = new TIntArrayList();
+        // go to first Element node
+        MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
+
+        // iterate through HC and add list elements
+        while(node != hc.variableTargetOf("null")){
+            res.add("Dummy Object" + index);
+
+            // add variables
+            if (hc.attachedVariablesOf(node).size() > 0){
+                List<String> vars = new LinkedList<>();
+                for(int varEdge : hc.attachedVariablesOf(node).toArray()){
+                    vars.add(hc.nameOf(varEdge));
+                }
+                variablesAndElements.put(res.get(index), vars);
+            }
+
+            index++;
+            MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
+        }
+
+        return res;
+    }
+
+
+
 
     private List<List<Object>> buildLists(int maxListLength){
         List<List<Object>> result = new LinkedList<>();
