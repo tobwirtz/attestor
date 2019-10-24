@@ -106,7 +106,7 @@ class MethodsToOperateOnLists {
         HeapConfiguration copyWithSecondRule = heapConfig.clone();
 
         // materialize with first rule
-        int nextConcreteNode = heapConfig.attachedNodesOf(heapConfig.attachedNonterminalEdgesOf(node).get(0)).get(1); // TODO use method from this class
+        int nextConcreteNode = heapConfig.attachedNodesOf(ntEdgeToBeMaterialized).get(1);
         copyWithFirstRule.builder().removeNonterminalEdge(ntEdgeToBeMaterialized)
                 .addSelector(node, next, nextConcreteNode).build();
 

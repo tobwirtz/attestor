@@ -16,6 +16,7 @@ import de.rwth.i2.attestor.util.SingleElementUtil;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jboss.util.Heap;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -121,7 +122,12 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
                 result.add(preparedState.shallowCopyWithUpdateHeap(copy));
 
-            }else{ // TODO use method from MethodsToOperateOnLists
+            }else{
+
+                Set<HeapConfiguration> materializedHeaps = MethodsToOperateOnLists.materializeFollowingNtEdgeManually(heapConfig, node, next, scene().getType("java.util.LinkedList"));
+                HeapConfiguration copyWithFirstRule = (HeapConfiguration) materializedHeaps.toArray()[0];
+                HeapConfiguration copyWithSecondRule = (HeapConfiguration) materializedHeaps.toArray()[1];
+                /*
                 // the next node is ntEdge
                 int ntEdgeToBeMaterialized = MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, heapConfig);
 
@@ -129,7 +135,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
                 HeapConfiguration copyWithSecondRule = heapConfig.clone();
 
                 // materialize with first rule
-                int nextConcreteNode = MethodsToOperateOnLists.getNextConcreteNodeInList(heapConfig, visitedNodes, node, next, getFirst);
+                int nextConcreteNode = heapConfig.attachedNodesOf(ntEdgeToBeMaterialized).get(1);
                 copyWithFirstRule.builder().removeNonterminalEdge(ntEdgeToBeMaterialized)
                         .addSelector(node, next, nextConcreteNode).build();
 
@@ -142,7 +148,9 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
 
                 // replace first tentacle of ntEdge with the new node
                 MethodsToOperateOnLists.replaceNtEdgeWithUpdatedTentacles(copyWithSecondRule, ntEdgeToBeMaterialized, newNode.get(0), copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).get(1));
-                //copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).replace(0, newNode.get(0));
+
+
+                 */
 
                 // remove nodes
                 if(heapConfig.selectorLabelsOf(prevNode).contains(getFirst)){
