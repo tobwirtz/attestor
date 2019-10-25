@@ -174,6 +174,10 @@ public class ValidationComponent extends SceneObject {
             if(!result){
                 return false;
             }
+            if(successors.size() > 1 && !correctenesCheck(inputState.getHeap().clone(), successors, stmtToBeValidated)){
+                System.out.println("Correctnes Check failed");
+                return false;
+            }
         }
 
 
@@ -258,7 +262,7 @@ public class ValidationComponent extends SceneObject {
         int node = hc.variableTargetOf("head");
         TIntArrayList visitedNodes = new TIntArrayList();
         // go to first Element node
-        MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
+        node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
 
         // iterate through HC and add list elements
         while(node != hc.variableTargetOf("null")){
@@ -274,7 +278,7 @@ public class ValidationComponent extends SceneObject {
             }
 
             index++;
-            MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
+            node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
         }
 
         return res;
@@ -350,6 +354,150 @@ public class ValidationComponent extends SceneObject {
 
         return true;
     }
+
+
+    private boolean correctenesCheck(HeapConfiguration inputHeap, Collection<ProgramState> succs, String statement){
+
+        // 1. materialize first time
+        List<HeapConfiguration> workset = materializeEachNtEdgeOnce(inputHeap);
+
+        while(!succs.isEmpty()) {
+
+            for(HeapConfiguration hc : workset){
+                if(hc.countNonterminalEdges() == 0){
+
+                    // 2. translate to library list
+                    Map<Object, List<String>> elementsAndVariableNames = new HashMap<>();
+                    List<Object> libraryList = concretizedHCtoDLL(hc, elementsAndVariableNames);
+
+                    // 3. apply library method and transform result to abstract HeapConfiguration
+                    List<HeapConfiguration> results = new LinkedList<>();
+                    List<String> exceptions = new LinkedList<>();
+                    switch(statement){
+                        case "AddAtIndexStmt":
+                            for(int i = 0; i <= libraryList.size()+1; i++) {
+                                try {
+                                    List<Object> tmp = new LinkedList(libraryList);
+                                    tmp.add(i, "Test");
+                                    results.add(dllToHC(tmp, elementsAndVariableNames));
+                                }catch (IndexOutOfBoundsException e){
+                                    exceptions.add("IndexOutOfBoundsException");
+                                }
+                            }
+                            break;
+
+                        case "GetIndexStmt":
+                            for(int i = 0; i <= libraryList.size(); i++) {
+                                try {
+                                    List<Object> tmp = new LinkedList<>(libraryList);
+                                    Map<Object, List<String>> tmpEandVnames = elementsAndVariableNames;
+                                    if (tmpEandVnames.containsKey(libraryList.get(i))) {
+                                        tmpEandVnames.get(libraryList.get(i)).add("GetIndexStmtTestVariable");
+                                    } else {
+                                        List<String> newVars = new LinkedList<>();
+                                        newVars.add("GetIndexStmtTestVariable");
+                                        tmpEandVnames.put(libraryList.get(i), newVars);
+                                    }
+
+                                    results.add(dllToHC(tmp, elementsAndVariableNames));
+                                }catch (IndexOutOfBoundsException e){
+                                    exceptions.add("IndexOutOfBoundsException");
+                                }
+                            }
+                            break;
+
+                        case "RemoveIndexStmt":
+                            for(int i = 0; i <= libraryList.size(); i++) {
+                                try {
+                                    List<Object> tmp = new LinkedList<>(libraryList);
+                                    tmp.remove(i);
+                                    results.add(dllToHC(tmp, elementsAndVariableNames));
+                                } catch (IndexOutOfBoundsException e){
+                                    exceptions.add("IndexOutOfBoundsException");
+                                }
+                            }
+                            break;
+
+                        default: return false;
+                    }
+
+                    // 4. remove reached HCs from succs set
+                    for(HeapConfiguration res : results){
+                        List<ProgramState> toBeRemoved = new LinkedList<>();
+                        for(ProgramState state : succs){
+                            if(state instanceof ExceptionProgramState && exceptions.contains(((ExceptionProgramState) state).exceptionMessage)){
+                                toBeRemoved.add(state);
+                            }else if(!(state instanceof ExceptionProgramState)){
+                                HeapConfiguration succHC = this.scene().strategies().getAggressiveCanonicalizationStrategy().canonicalize(state.getHeap());
+                                if(succHC.equals(res)){
+                                    toBeRemoved.add(state);
+                                }
+                            }
+                        }
+                        for(ProgramState state : toBeRemoved){
+                            succs.remove(state);
+                        }
+
+                    }
+
+                }
+            }
+
+            // remove all concrete states in workset (finished working with them)
+            Set<HeapConfiguration> removableWorklistItems = new HashSet<>();
+            for(HeapConfiguration hc : workset){
+                if(hc.nonterminalEdges().size() == 0){
+                    removableWorklistItems.add(hc);
+                }
+            }
+            workset.removeAll(removableWorklistItems);
+
+            List<HeapConfiguration> tmp = new LinkedList<>();
+            for(HeapConfiguration hc : workset){
+                tmp.addAll(materializeEachNtEdgeOnce(hc));
+            }
+
+
+
+        }
+
+
+        return true;
+    }
+
+
+    private List<HeapConfiguration> materializeEachNtEdgeOnce(HeapConfiguration hc){
+
+        List<HeapConfiguration> workset = new LinkedList<>();
+        workset.add(hc);
+
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
+        SelectorLabel next = scene().getSelectorLabel("next");
+
+        int node = hc.variableTargetOf("head");
+        TIntArrayList visitedNodes = new TIntArrayList();
+
+        node = hc.selectorTargetOf(node, getFirst);
+
+        while(hc.variableTargetOf("null") != node){
+
+            if(hc.selectorLabelsOf(node).contains(next)){
+                node = hc.selectorTargetOf(node, next);
+            }else{
+
+                List<HeapConfiguration> tmp = new LinkedList<>();
+
+                for (HeapConfiguration worksetElement : workset) {
+                    tmp.addAll(MethodsToOperateOnLists.materializeFollowingNtEdgeManually(worksetElement, node, next, scene().getType("java.util.LinkedList")));
+                }
+
+                workset = tmp;
+                node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
+            }
+        }
+        return workset;
+    }
+
 
 
 
