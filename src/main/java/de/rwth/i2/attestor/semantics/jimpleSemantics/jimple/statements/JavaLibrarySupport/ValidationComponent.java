@@ -49,7 +49,7 @@ public class ValidationComponent extends SceneObject {
             ProgramState inputState = scene().createProgramState(dllToHC(l, elementsAndVariableNames));
 
 
-            Collection<ProgramState> successors = new LinkedHashSet<>();
+            Collection<ProgramState> successors;
             List<Object> libraryList = new LinkedList<>(l);
             ArrayList<Value> arguments = new ArrayList<>();
             InvokeHelper instanceHelper = new InstanceInvokeHelper(this, new Local(inputState.getVariableTarget("head").type(), "head"), arguments);
@@ -390,16 +390,18 @@ public class ValidationComponent extends SceneObject {
                             for(int i = 0; i <= libraryList.size(); i++) {
                                 try {
                                     List<Object> tmp = new LinkedList<>(libraryList);
-                                    Map<Object, List<String>> tmpEandVnames = elementsAndVariableNames;
+                                    Map<Object, List<String>> tmpEandVnames = new HashMap<>(elementsAndVariableNames);
                                     if (tmpEandVnames.containsKey(libraryList.get(i))) {
-                                        tmpEandVnames.get(libraryList.get(i)).add("GetIndexStmtTestVariable");
+                                        List<String> tmpVarList = new LinkedList<>(tmpEandVnames.get(libraryList.get(i)));
+                                        tmpVarList.add("GetIndexStmtTestVariable");
+                                        tmpEandVnames.replace(libraryList.get(i), tmpVarList);
                                     } else {
                                         List<String> newVars = new LinkedList<>();
                                         newVars.add("GetIndexStmtTestVariable");
                                         tmpEandVnames.put(libraryList.get(i), newVars);
                                     }
 
-                                    results.add(dllToHC(tmp, elementsAndVariableNames));
+                                    results.add(dllToHC(tmp, tmpEandVnames));
                                 }catch (IndexOutOfBoundsException e){
                                     exceptions.add("IndexOutOfBoundsException");
                                 }
@@ -457,6 +459,7 @@ public class ValidationComponent extends SceneObject {
                 tmp.addAll(materializeEachNtEdgeOnce(hc));
             }
 
+            workset = tmp;
 
 
         }
@@ -468,11 +471,13 @@ public class ValidationComponent extends SceneObject {
 
     private List<HeapConfiguration> materializeEachNtEdgeOnce(HeapConfiguration hc){
 
-        List<HeapConfiguration> workset = new LinkedList<>();
-        workset.add(hc);
+        List<HeapConfiguration> result = new LinkedList<>();
+        HeapConfiguration list1 = hc.clone();
+        HeapConfiguration list2 = hc.clone();
 
         SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
+        Type type = scene().getType("java.util.LinkedList");
 
         int node = hc.variableTargetOf("head");
         TIntArrayList visitedNodes = new TIntArrayList();
@@ -485,17 +490,17 @@ public class ValidationComponent extends SceneObject {
                 node = hc.selectorTargetOf(node, next);
             }else{
 
-                List<HeapConfiguration> tmp = new LinkedList<>();
+                list1 = MethodsToOperateOnLists.materializeFollowingNtEdgeWithFirstRule(list1, node, next, type);
+                list2 = MethodsToOperateOnLists.materializeFollowingNtEdgeWithSecondRule(list2, node, next, type);
 
-                for (HeapConfiguration worksetElement : workset) {
-                    tmp.addAll(MethodsToOperateOnLists.materializeFollowingNtEdgeManually(worksetElement, node, next, scene().getType("java.util.LinkedList")));
-                }
-
-                workset = tmp;
                 node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
             }
         }
-        return workset;
+
+        result.add(list1);
+        result.add(list2);
+
+        return result;
     }
 
 

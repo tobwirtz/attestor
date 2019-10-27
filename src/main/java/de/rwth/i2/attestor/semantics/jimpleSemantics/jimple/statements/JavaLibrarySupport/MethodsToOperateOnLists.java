@@ -126,6 +126,51 @@ class MethodsToOperateOnLists {
         return result;
     }
 
+
+
+    static HeapConfiguration materializeFollowingNtEdgeWithFirstRule(HeapConfiguration heapConfig, int node, SelectorLabel next, Type nodeType){
+
+        // the next node needs to be an ntEdge
+        int ntEdgeToBeMaterialized = MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, heapConfig);
+
+        HeapConfiguration copyWithFirstRule = heapConfig.clone();
+
+        // materialize with first rule
+        int nextConcreteNode = heapConfig.attachedNodesOf(ntEdgeToBeMaterialized).get(1);
+        copyWithFirstRule.builder().removeNonterminalEdge(ntEdgeToBeMaterialized)
+                .addSelector(node, next, nextConcreteNode).build();
+
+
+        return copyWithFirstRule;
+    }
+
+
+
+    static HeapConfiguration materializeFollowingNtEdgeWithSecondRule(HeapConfiguration heapConfig, int node, SelectorLabel next, Type nodeType){
+
+        // the next node needs to be an ntEdge
+        int ntEdgeToBeMaterialized = MethodsToOperateOnLists.getAttachedNtEdgeInNextDirection(node, heapConfig);
+
+        HeapConfiguration copyWithSecondRule = heapConfig.clone();
+
+
+        // materialize with second rule
+        TIntArrayList newNode = new TIntArrayList();
+        copyWithSecondRule.builder().addNodes(nodeType, 1, newNode)
+                .removeSelector(node, next)
+                .addSelector(node, next, newNode.get(0))
+                .build();
+
+        // replace first tentacle of ntEdge with the new node
+        replaceNtEdgeWithUpdatedTentacles(copyWithSecondRule, ntEdgeToBeMaterialized, newNode.get(0), copyWithSecondRule.attachedNodesOf(ntEdgeToBeMaterialized).get(1));
+
+
+        return copyWithSecondRule;
+    }
+
+
+
+
     static int getAttachedNtEdgeInNextDirection(int node, HeapConfiguration hc){
         TIntArrayList attachedNtEdges = hc.attachedNonterminalEdgesOf(node);
         int res = -1;
