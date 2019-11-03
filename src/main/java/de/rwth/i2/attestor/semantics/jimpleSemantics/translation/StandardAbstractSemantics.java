@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import soot.Unit;
 import soot.jimple.InstanceFieldRef;
+import soot.jimple.internal.JCastExpr;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -202,6 +203,9 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
         }
         if (input instanceof soot.jimple.NeExpr) {
             return translateUnequalExpr(input);
+        }
+        if(input instanceof JCastExpr){
+            return translateValue(((JCastExpr) input).getOp());
         }
         logger.trace("StandardSemantic not applicable. Using next level..");
         return nextLevel.translateValue(input);
