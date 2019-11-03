@@ -88,7 +88,7 @@ public class IteratorAsObjectStmt extends Statement {
         TIntArrayList newNodes = new TIntArrayList();
         HeapConfiguration hc = programState.getHeap();
         hc.builder().addNodes(scene().getType("java.util.Iterator"), 1, newNodes)
-                .addSelector(newNodes.get(0), scene().getSelectorLabel("curr"), hc.selectorTargetOf(baseNode, getFirst))
+                .addSelector(newNodes.get(0), scene().getSelectorLabel("curr"), baseNode)
                 .build();
 
         int iteratorObjectNode = newNodes.get(0);

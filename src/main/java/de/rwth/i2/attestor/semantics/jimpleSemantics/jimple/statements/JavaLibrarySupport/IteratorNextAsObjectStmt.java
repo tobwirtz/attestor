@@ -11,6 +11,7 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.SettableValue
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.util.SingleElementUtil;
+import gnu.trove.list.array.TIntArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,6 +72,7 @@ public class IteratorNextAsObjectStmt extends Statement {
         programState = programState.clone();
 
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
         SelectorLabel curr = scene().getSelectorLabel("curr");
 
@@ -89,27 +91,27 @@ public class IteratorNextAsObjectStmt extends Statement {
 
 
         // get HeapConfigurations with concrete successors of curr
-        Set<HeapConfiguration> HeapConfigs = new LinkedHashSet<>();
+        Set<HeapConfiguration> heapConfigs = new LinkedHashSet<>();
 
-        if(hc.selectorLabelsOf(node).contains(next) || node == hc.variableTargetOf("null")){
+        if(hc.selectorLabelsOf(node).contains(next) || node == hc.variableTargetOf("null") || hc.selectorLabelsOf(node).contains(getFirst)){
 
-            HeapConfigs.add(hc.clone());
+            heapConfigs.add(hc.clone());
 
         }else{
 
             // materialize
-            HeapConfigs.addAll(MethodsToOperateOnLists.materializeFollowingNtEdgeManually(hc, node, next, scene().getType("java.util.LinkedList")));
+            heapConfigs.addAll(MethodsToOperateOnLists.materializeFollowingNtEdgeManually(hc, node, next, scene().getType("java.util.LinkedList")));
 
         }
 
         // set curr to curr.next and add to result
         Set<ProgramState> result = new LinkedHashSet<>();
-        for(HeapConfiguration heap : HeapConfigs){
+        for(HeapConfiguration heap : heapConfigs){
 
             int newCurr = node;
 
             if(node != heap.variableTargetOf("null")){
-                newCurr = heap.selectorTargetOf(node, next);
+                newCurr = MethodsToOperateOnLists.getNextConcreteNodeInList(heap, new TIntArrayList(), node, next, getFirst);// heap.selectorTargetOf(node, next);
                 heap.builder()
                         .removeSelector(iteratorNode, curr)
                         .addSelector(iteratorNode, curr, newCurr)
