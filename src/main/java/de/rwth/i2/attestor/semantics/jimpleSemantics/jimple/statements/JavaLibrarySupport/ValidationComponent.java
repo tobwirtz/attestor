@@ -16,7 +16,6 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
 import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.types.Type;
-import de.rwth.i2.attestor.util.SingleElementUtil;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
@@ -145,6 +144,47 @@ public class ValidationComponent extends SceneObject {
 
                     break;
 
+                case "IteratorStmts":
+
+                    // create statement
+                    //lhs is settable value (var set to iteratornode), rhs is (Value) Base/head of List
+                    lhs = new Local(scene().getType("java.lang.Object"),"IteratorObjectVariable");
+                    Local var = new Local(scene().getType("java.lang.Object"),"IteratorTestVariable");
+                    Statement iteratorStmt = new IteratorAsObjectStmt(this, lhs, new Local(inputState.getVariableTarget("head").type(), "head"), 1, new HashSet<>());
+                    Statement nextStmt = new IteratorNextAsObjectStmt(this, var, lhs, 1, new HashSet<>());
+
+                    successors = iteratorStmt.computeSuccessors(inputState);
+                    Iterator it = libraryList.iterator();
+
+                    int randomIndex = rand.nextInt(Math.min(maxIndex, 10))+1;
+
+                    // apply .next method for a random amount of times
+                    Object currentElement = "false";
+                    for(int i = 0; i < randomIndex; i++){
+                        successors = computeSuccessorsForAllStates(successors, nextStmt);
+
+                        try{
+                            currentElement = it.next();
+                        } catch (Exception e) {
+                            exception = "NoSuchElementException";
+                            break;
+                        }
+                    }
+
+                    // add iterator to variables
+                    if(!exception.equals("NoSuchElementException") && currentElement != null){
+                        if(elementsAndVariableNames.containsKey(currentElement)){
+                            elementsAndVariableNames.get(currentElement).add("IteratorTestVariable");
+                        }else{
+                            List<String> newVars = new LinkedList<>();
+                            newVars.add("IteratorTestVariable");
+                            elementsAndVariableNames.put(currentElement, newVars);
+                        }
+                    }
+
+
+                    break;
+
                 default: return false;
             }
 
@@ -183,6 +223,25 @@ public class ValidationComponent extends SceneObject {
 
         return result;
     }
+
+
+
+    private Collection<ProgramState> computeSuccessorsForAllStates(Collection<ProgramState> inputStates, Statement stmt){
+        Collection<ProgramState> successors = new LinkedHashSet<>();
+
+        for(ProgramState state : inputStates){
+            if(state instanceof ExceptionProgramState){
+                successors.add(state);
+            }else {
+                successors.addAll(stmt.computeSuccessors(state));
+            }
+        }
+
+
+        return successors;
+    }
+
+
 
     private HeapConfiguration dllToHC(List list, Map<Object, List<String>> variablesAndElements){
         Set<Object> elementsHavingVariables = variablesAndElements.keySet();
@@ -225,6 +284,13 @@ public class ValidationComponent extends SceneObject {
             if(elementsHavingVariables.contains(element)){
                 // add variable to nodes.get(index)
                 for(String varName : variablesAndElements.get(element)) {
+                    if(varName.equals("IteratorTestVariable")){
+                        // create iterator node and make the curr selector point to the element node
+                        TIntArrayList newNodes = new TIntArrayList();
+                        builder = builder.addNodes(scene().getType("java.util.Iterator"), 1, newNodes)
+                                .addSelector(newNodes.get(0), scene().getSelectorLabel("curr"), nodes.get(index))
+                                .addVariableEdge("IteratorObjectVariable", newNodes.get(0));
+                    }
                     builder = builder.addVariableEdge(varName, nodes.get(index));
                 }
 
@@ -343,10 +409,12 @@ public class ValidationComponent extends SceneObject {
             node = hc.selectorTargetOf(node, getFirst);
 
             while(node != hc.variableTargetOf("null")){
-
+/*
                 if(node == -1 || concreteNodeCounter > maxlength){
                     return false;
                 }
+
+ */
                 node = MethodsToOperateOnLists.getNextConcreteNodeInList(hc, visitedNodes, node, next, getFirst);
                 concreteNodeCounter++;
             }
@@ -420,6 +488,30 @@ public class ValidationComponent extends SceneObject {
                             }
                             break;
 
+                        case "IteratorStmts":
+                            // create iterator, iterate through list and add
+                            Iterator<Object> iterator = libraryList.iterator();
+                            while(iterator.hasNext()){
+
+                                Object currentElement = iterator.next();
+
+                                List<Object> tmp = new LinkedList<>(libraryList);
+                                Map<Object, List<String>> tmpEandVnames = new HashMap<>(elementsAndVariableNames);
+                                if (tmpEandVnames.containsKey(currentElement)) {
+                                    List<String> tmpVarList = new LinkedList<>(tmpEandVnames.get(currentElement));
+                                    tmpVarList.add("IteratorTestVariable");
+                                    tmpEandVnames.replace(currentElement, tmpVarList);
+                                } else {
+                                    List<String> newVars = new LinkedList<>();
+                                    newVars.add("IteratorTestVariable");
+                                    tmpEandVnames.put(currentElement, newVars);
+                                }
+                                results.add(dllToHC(tmp, tmpEandVnames));
+
+                            }
+                            exceptions.add("NoSuchElementException");
+                            break;
+
                         default: return false;
                     }
 
@@ -454,6 +546,7 @@ public class ValidationComponent extends SceneObject {
             }
             workset.removeAll(removableWorklistItems);
 
+            // materialize further
             List<HeapConfiguration> tmp = new LinkedList<>();
             for(HeapConfiguration hc : workset){
                 tmp.addAll(materializeEachNtEdgeOnce(hc));

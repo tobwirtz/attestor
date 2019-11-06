@@ -15,8 +15,6 @@ import de.rwth.i2.attestor.phases.preprocessing.MarkingGenerationPhase;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.LinkedList;
-
 import static org.junit.Assert.assertTrue;
 
 public class ValidationComponentTest {
@@ -69,10 +67,14 @@ public class ValidationComponentTest {
         //System.out.println(hc.toString());
         int maxListLength = 50;
         int inversePercentageForVariable = 4;
-        assertTrue("AddStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddStmt"));
+        /*assertTrue("AddStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddStmt"));
         assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddAtIndexStmt"));
         assertTrue("ClearStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "ClearStmt"));
         assertTrue("GetIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "GetIndexStmt"));
-        assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));
+        assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));*/
+        assertTrue("IteratorStmts are successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "IteratorStmts"));
+
+        // iterator methods
+        // linked list init???
     }
 }
