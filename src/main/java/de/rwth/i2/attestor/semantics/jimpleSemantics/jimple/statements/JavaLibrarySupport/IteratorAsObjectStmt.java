@@ -70,10 +70,7 @@ public class IteratorAsObjectStmt extends Statement {
     public Collection<ProgramState> computeSuccessors(ProgramState programState) {
 
         programState = programState.clone();
-        //ConcreteValue concreteRHS;
 
-        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
-        SelectorLabel next = scene().getSelectorLabel("next");
 
         int baseNode;
         try{

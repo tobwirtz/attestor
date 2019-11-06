@@ -4,6 +4,7 @@ import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.programState.defaultState.ExceptionProgramState;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.Statement;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.GeneralConcreteValue;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.NullPointerDereferenceException;
@@ -108,33 +109,36 @@ public class IteratorNextAsObjectStmt extends Statement {
         Set<ProgramState> result = new LinkedHashSet<>();
         for(HeapConfiguration heap : heapConfigs){
 
-            int newCurr = node;
+            int newCurr = MethodsToOperateOnLists.getNextConcreteNodeInList(heap, new TIntArrayList(), node, next, getFirst);
 
-            if(node != heap.variableTargetOf("null")){
-                newCurr = MethodsToOperateOnLists.getNextConcreteNodeInList(heap, new TIntArrayList(), node, next, getFirst);// heap.selectorTargetOf(node, next);
+            if(newCurr != heap.variableTargetOf("null")) {
                 heap.builder()
                         .removeSelector(iteratorNode, curr)
                         .addSelector(iteratorNode, curr, newCurr)
                         .build();
+
+                ProgramState p = programState.shallowCopyWithUpdateHeap(heap);
+
+                // get concrete value of the curr node
+                GeneralConcreteValue concreteRHS = new GeneralConcreteValue(scene().getType("java.util.LinkedList"), newCurr);
+
+
+                // do same as in assign stmt
+                try {
+                    lhs.evaluateOn(p); // enforce materialization if necessary
+                    lhs.setValue(p, concreteRHS);
+                } catch (NullPointerDereferenceException e) {
+                    logger.error(e.getErrorMessage(this));
+                }
+
+                p = p.clone();
+
+                p.setProgramCounter(nextPC);
+                result.add(p);
+            }else{
+                // .next is executed although .hasNext would return false -> Exception
+                result.add(new ExceptionProgramState(programState.getHeap(), "NoSuchElementException"));
             }
-            ProgramState p = programState.shallowCopyWithUpdateHeap(heap);
-
-            // get concrete value of the curr node
-            GeneralConcreteValue concreteRHS = new GeneralConcreteValue(scene().getType("java.util.LinkedList"), newCurr);
-
-
-            // do same as in assign stmt
-            try {
-                lhs.evaluateOn(p); // enforce materialization if necessary
-                lhs.setValue(p, concreteRHS);
-            } catch (NullPointerDereferenceException e) {
-                logger.error(e.getErrorMessage(this));
-            }
-
-            p = p.clone();
-
-            p.setProgramCounter(nextPC);
-            result.add(p);
         }
 
         // TODO Think about eliminating dead variables
