@@ -137,6 +137,14 @@ public class StandardAbstractSemantics extends SceneObject implements JimpleToAb
                     logger.trace("recognized InvokeStmt. " + "<java.util.List: boolean add(java.lang.Object)>");
                     return new AddStmt(this, invokePrepare, translatedBase, pc + 1);
 
+                case "<java.util.List: void add(int,java.lang.Object)>":
+                    instanceMethod = (soot.jimple.InstanceInvokeExpr) expr;
+                    sootBase = instanceMethod.getBase();
+                    translatedBase = topLevel.translateValue(sootBase);
+
+                    logger.trace("recognized InvokeStmt. " + "<java.util.List: boolean add(java.lang.Object)>");
+                    return new AddAtIndexStmt(this, invokePrepare, translatedBase, pc + 1);
+
                 case "<java.util.List: void clear()>":
                     instanceMethod = (soot.jimple.InstanceInvokeExpr) expr;
                     sootBase = instanceMethod.getBase();
