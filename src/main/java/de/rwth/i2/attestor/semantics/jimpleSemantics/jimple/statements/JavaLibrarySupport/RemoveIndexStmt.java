@@ -67,7 +67,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
         HeapConfiguration heapConfig = preparedState.getHeap();
 
 
-        // collect nodes, that have a nonterminal edge in the "next" or "prev" direction
+        /* collect nodes, that have a nonterminal edge in the "next" or "prev" direction
         TIntArrayList hasNonterminalEdgeNextDirection = new TIntArrayList();
         TIntArrayList hasNonterminalEdgePrevDirection = new TIntArrayList();
         int[] nTEdges = heapConfig.nonterminalEdges().toArray();
@@ -76,6 +76,7 @@ public class RemoveIndexStmt extends Statement implements InvokeCleanup {
             hasNonterminalEdgeNextDirection.add(heapConfig.attachedNodesOf(i).get(0));
             hasNonterminalEdgePrevDirection.add(heapConfig.attachedNodesOf(i).get(1));
         }
+         */
 
         // Case when index is out of bounds
         result.add(new ExceptionProgramState(programState.getHeap().clone(), "IndexOutOfBoundsException"));

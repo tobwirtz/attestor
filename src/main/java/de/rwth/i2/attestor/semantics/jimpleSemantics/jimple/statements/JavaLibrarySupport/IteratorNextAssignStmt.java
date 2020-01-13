@@ -88,10 +88,15 @@ public class IteratorNextAssignStmt extends Statement {
             concreteRHS = programState.getUndefined();
         }
 
+        SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
 
-        if(concreteRHS.equals(programState.getVariableTarget("null"))){
-            concreteRHS = programState.getSelectorTarget(concreteRHS, next);
+        if(!concreteRHS.equals(programState.getVariableTarget("null"))){
+            if(concreteRHS.type() == scene().getType("java.util.LinkedListPointer")){
+                concreteRHS = programState.getSelectorTarget(concreteRHS, getFirst);
+            }else {
+                concreteRHS = programState.getSelectorTarget(concreteRHS, next);
+            }
         }
 
         try {

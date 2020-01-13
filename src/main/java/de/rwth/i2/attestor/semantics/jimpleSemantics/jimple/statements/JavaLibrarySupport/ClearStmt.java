@@ -61,13 +61,14 @@ public class ClearStmt extends Statement implements InvokeCleanup {
 
 
 
-        // collect nodes, that have a nonterminal edge in the "next" direction
+        /* collect nodes, that have a nonterminal edge in the "next" direction
         TIntArrayList hasNonterminalEdge = new TIntArrayList();
         int[] nTEdges = heapConfig.nonterminalEdges().toArray();
         for (int i : nTEdges
              ) {
             hasNonterminalEdge.add(heapConfig.attachedNodesOf(i).get(0));
         }
+        */
 
         // rearrange first next pointer to point to null-node
         int node;
@@ -79,7 +80,7 @@ public class ClearStmt extends Statement implements InvokeCleanup {
         }
 
         System.out.println("Before:" + heapConfig);
-        System.out.println("Set:" + hasNonterminalEdge.toString());
+        //System.out.println("Set:" + hasNonterminalEdge.toString());
 
         SelectorLabel getFirst = scene().getSelectorLabel("getFirst");
         SelectorLabel next = scene().getSelectorLabel("next");
