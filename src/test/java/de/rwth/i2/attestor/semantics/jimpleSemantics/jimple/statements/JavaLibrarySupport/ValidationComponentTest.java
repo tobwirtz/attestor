@@ -22,6 +22,8 @@ public class ValidationComponentTest {
     private SceneObject sceneObject;
     //private LinkedList<Object> inputList;
     private ValidationComponent validationComponent;
+    private int maxListLength = 50;
+    private int inversePercentageForVariable = 4;
 
     @Before
     public void setUp() throws Exception {
@@ -61,20 +63,55 @@ public class ValidationComponentTest {
     }
 
     @Test
-    public void validateTest() {
+    public void validateAdd() {
         //System.out.println(inputList.toString());
         //HeapConfiguration hc = translator.dllToHC(inputList);
         //System.out.println(hc.toString());
-        int maxListLength = 50;
-        int inversePercentageForVariable = 4;
-        /*assertTrue("AddStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddStmt"));
-        assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddAtIndexStmt"));
-        assertTrue("ClearStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "ClearStmt"));
-        assertTrue("GetIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "GetIndexStmt"));
-        assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));*/
-        assertTrue("IteratorStmts are successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "IteratorStmts"));
+        //int maxListLength = 50;
+        //int inversePercentageForVariable = 4;
+        assertTrue("AddStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddStmt"));
+        //assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddAtIndexStmt"));
+        //assertTrue("ClearStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "ClearStmt"));
+        //assertTrue("GetIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "GetIndexStmt"));
+        //assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));
+        //assertTrue("IteratorStmts are successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "IteratorStmts"));
 
         // iterator methods
         // linked list init???
+    }
+
+    @Test
+    public void validateAddAtIndex() {
+
+        assertTrue("AddAtIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "AddAtIndexStmt"));
+
+    }
+
+    @Test
+    public void validateClear() {
+
+        assertTrue("ClearStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "ClearStmt"));
+
+    }
+
+    @Test
+    public void validateGet() {
+
+        assertTrue("GetIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "GetIndexStmt"));
+
+    }
+
+    @Test
+    public void validateRemove() {
+
+        assertTrue("RemoveIndexStmt is successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "RemoveIndexStmt"));
+
+    }
+
+    @Test
+    public void validateIteratorStmts() {
+
+        assertTrue("IteratorStmts are successfully validated", validationComponent.validate(maxListLength, inversePercentageForVariable, "IteratorStmts"));
+
     }
 }
